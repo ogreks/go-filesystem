@@ -20,4 +20,5 @@
 
 package filesystem
 
-type FileSystem interface{}
+type FileSystem interface {
+}
