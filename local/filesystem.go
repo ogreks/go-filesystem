@@ -11,9 +11,8 @@ type Storage struct {
 }
 
 func NewFileSystem(path string) filesystem.FileSystem {
-
 	return &Storage{
-		client: &Bucket{},
+		client: &Bucket{filepath: path},
 	}
 }
 

@@ -1,10 +1,7 @@
 package local
 
 type Bucket struct {
-}
-
-func init() {
-
+	filepath string
 }
 
 func (bucket *Bucket) createFile() {
