@@ -18,7 +18,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package filesystem
+package aliyun
 
-type Storage interface {
+import (
+	"bytes"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/noOvertimeGroup/go-filesystem"
+	"io"
+)
+
+type Storage struct {
+	client *oss.Bucket
+}
+
+func NewStorage(bucket *oss.Bucket) filesystem.Storage {
+	return &Storage{
+		client: bucket,
+	}
+}
+
+func (s *Storage) PutFile(target string, file io.Reader) error {
+	err := s.client.PutObject(target, file)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) GetFile(target string) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	response, err := s.client.GetObject(target)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		if err != nil {
+			// TODO logging set log
+			return
+		}
+	}(response)
+
+	_, err = io.Copy(buf, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
 }
