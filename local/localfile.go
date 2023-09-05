@@ -13,7 +13,7 @@ func (localStorage *LocalStorage) NewFileSystem(file string) *LocalStorage {
 	return localStorage
 }
 
-func (LocalStorage *LocalStorage) PutFile(ctx context.Context, newPath string, file io.ReadCloser) error {
+func (localStorage *LocalStorage) PutFile(ctx context.Context, newPath string, file io.ReadCloser) error {
 	defer file.Close()
 	return nil
 }
