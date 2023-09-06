@@ -25,22 +25,33 @@ has_errors=0
 allgofiles=$(git diff --cached --name-only --diff-filter=ACM | grep '.go$' | grep -v 'vendor*' | grep -v '*.pb.go')
 
 # 高版本兼容
+# shellcheck disable=SC2039
 declare -a gofiles
+# shellcheck disable=SC2039
 declare -a godirs
+# shellcheck disable=SC2068
+# shellcheck disable=SC2039
 for allfile in ${allgofiles[@]}; do
     gofiles+=("$allfile")
     dir=$(dirname "$allfile")
     godirs+=("$dir")
 done
 
+# shellcheck disable=SC2039
+# shellcheck disable=SC2178
 godirs=$(echo "${godirs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
+# shellcheck disable=SC2128
 [ -z "$gofiles" ] && exit 0
 
 check_gofmt() {
+    # shellcheck disable=SC2068
     unformatted=$(gofmt -l ${gofiles[@]})
     if [ -n "$unformatted" ]; then
+        # shellcheck disable=SC2028
         echo >&2 "gofmt Fail:\n Run following command:"
+        # shellcheck disable=SC2068
+        # shellcheck disable=SC2039
         for f in ${unformatted[@]}; do
             echo >&2 " gofmt -w $PWD/$f"
         done
@@ -51,9 +62,11 @@ check_gofmt() {
 
 check_goimports() {
     if goimports >/dev/null 2>&1; then
+        # shellcheck disable=SC2068
         unimports=$(goimports -l ${gofiles[@]})
         if [  -n "$unimports" ]; then
             echo >&2 "goimports Fail:\nRun following command:"
+            # shellcheck disable=SC2068
             for f in ${unimports[@]};do
                 echo >&2 " goimports -w $PWD/$f"
             done
@@ -68,6 +81,7 @@ check_goimports() {
 
 check_govet() {
     show_vet_header=true
+    # shellcheck disable=SC2068
     for dir in ${godirs[@]}; do
         vet=$(go vet $PWD/$dir 2>&1)
         if [ -n "$vet" -a $show_vet_header = true ]; then
@@ -90,9 +104,19 @@ check_gotest() {
     fi
 }
 
+check_golangcilint() {
+    if golangci-lint run >/dev/null 2>&1; then
+        echo 'golangci-lint run passed'
+    else
+        echo 'Error: golangci-lint run failed. Run: "golangci-lint run"' >&2
+        has_errors=1
+    fi
+}
+
 check_gofmt
 check_goimports
 check_govet
 check_gotest
+check_golangcilint
 
 exit $has_errors

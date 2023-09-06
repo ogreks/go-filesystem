@@ -1,4 +1,3 @@
-#!/bin/sh
 # Copyright (c) 2023 noOvertimeGroup
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,32 +18,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-RESULT=$(make check)
-printf "执行检查中...\n"
+name: Format Go code
 
-if [ -n "$RESULT" ]; then
-  echo >&2 "[ERROR]: 有文件发生变更，请将变更文件添加到本次提交中"
-  exit 1
-fi
+on:
+  push:
+    branches: [ master, develop]
+  pull_request:
+    branches: [ master, develop]
 
-# 定义正则表达式
-regex="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?: .+"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
 
-# 读取每个推送的引用
-while read oldrev newrev refname; do
-    # 获取新引用的所有提交
-    commits=$(git rev-list $oldrev..$newrev)
+      - name: Install goimports
+        run: go install golang.org/x/tools/cmd/goimports@latest
 
-    # 检查每个提交的提交信息
-    for commit in $commits; do
-        # 获取提交信息
-        msg=$(git log --format=%B -n 1 $commit)
-
-        # 检查提交信息是否符合规范
-        # shellcheck disable=SC2039
-        if [[ ! $msg =~ $regex ]]; then
-            echo "提交 $commit 不遵循常规提交准则。请参考：(常规提交规范)[https://www.conventionalcommits.org/en/v1.0.0/#summary]"
-            exit 1
-        fi
-    done
-done
+      - name: Check
+        run: |
+          make check
+          if [ -n "$(git status --porcelain)" ]; then
+             echo >&2 "错误: 请在本地运行命令'make check'后再提交."
+             exit 1
+          fi
