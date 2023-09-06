@@ -3,9 +3,12 @@ package tencentyun
 import (
 	"bytes"
 	"context"
+	"errors"
 	"github.com/noOvertimeGroup/go-filesystem"
+	"github.com/noOvertimeGroup/go-filesystem/internal/errs"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io"
+	"io/fs"
 )
 
 type Storage struct {
@@ -18,9 +21,20 @@ func NewStorage(client *cos.Client) filesystem.Storage {
 	}
 }
 
-func (s *Storage) PutFile(ctx context.Context, target string, file io.ReadCloser) error {
+func (s *Storage) PutFile(ctx context.Context, target string, file fs.File) error {
+	fileInfo, err := file.Stat()
+	if err != nil {
+		if errors.Is(err, fs.ErrClosed) {
+			return errs.ErrFileClose
+		}
+		return err
+	}
+
+	if fileInfo.Size() > filesystem.FileLimitSize {
+		return errs.ErrFileLimit
+	}
 	// TODO return http.Response handle error
-	_, err := s.client.Object.Put(ctx, target, file, &cos.ObjectPutOptions{})
+	_, err = s.client.Object.Put(ctx, target, file, &cos.ObjectPutOptions{})
 	if err != nil {
 		return err
 	}
