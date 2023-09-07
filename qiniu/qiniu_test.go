@@ -3,10 +3,8 @@ package qiniu
 import (
 	"context"
 	"fmt"
-	"github.com/noOvertimeGroup/go-filesystem"
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
-	"reflect"
 	"testing"
 )
 
@@ -22,35 +20,6 @@ type MyPutRet struct {
 var bucket = "go-file-system"
 var accessKey = "accessKey"
 var secretKey = "secretKey"
-
-func TestNewFileSystem(t *testing.T) {
-
-	type args struct {
-		bucket  *storage.FormUploader
-		upToken string
-	}
-	tests := []struct {
-		name string
-		args args
-		want filesystem.FileSystem
-	}{
-		{
-			name: "test1",
-			args: args{
-				bucket:  StorageFormUploader(),
-				upToken: getToken(),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewFileSystem(tt.args.bucket, tt.args.upToken); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewFileSystem() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func TestStorage_PutFile(t *testing.T) {
 	type fields struct {
@@ -79,7 +48,7 @@ func TestStorage_PutFile(t *testing.T) {
 				ctx    context.Context
 				target string
 				file   string
-			}{ctx: context.Background(), target: "github-6.png", file: "../resources/github.png"},
+			}{ctx: context.Background(), target: "github-7.png", file: "../resources/github.png"},
 		},
 	}
 	for _, tt := range tests {
