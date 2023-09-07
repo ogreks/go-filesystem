@@ -33,3 +33,15 @@ func TestGetFileInfo(t *testing.T) {
 	}
 	fmt.Println(s.GetFileInfo().Name())
 }
+
+func TestPutFile(t *testing.T) {
+	s := &Storage{
+		client: &Bucket{
+			filepath: "./test/test.txt",
+		},
+	}
+	err := s.client.PutFile("./test/test.txt", "./test/test1.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+}

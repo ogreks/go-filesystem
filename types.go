@@ -22,5 +22,7 @@ package filesystem
 
 const TimeFormat = "2006-01-02 15:04:05"
 
+const BUFFERSIZE = 1024
+
 //统一接口规范
 type FileSystem interface{}

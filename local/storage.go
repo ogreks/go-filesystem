@@ -22,7 +22,6 @@ package local
 
 import (
 	"github.com/noOvertimeGroup/go-filesystem"
-	"io"
 	"io/fs"
 )
 
@@ -42,6 +41,7 @@ func (s *Storage) GetFileInfo() fs.FileInfo {
 	return info
 }
 
-func (s *Storage) PutFile(newPath string, file io.ReadCloser) error {
-	return nil
+//复制文件，类似上传文件
+func (s *Storage) PutFile(source string, dest string) error {
+	return s.client.PutFile(source, dest)
 }

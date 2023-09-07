@@ -22,6 +22,8 @@ package local
 
 import (
 	"errors"
+	"github.com/noOvertimeGroup/go-filesystem"
+	"io"
 	"os"
 	"path"
 )
@@ -66,45 +68,79 @@ func (bucket *Bucket) GetDir(filepath string) string {
 //创建新的文件
 func (bucket *Bucket) createNewFile(filepath string) error {
 	_, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
 	return err
 }
 
-func (bucket *Bucket) openFile(filepath string) (*os.File, error) {
-	return os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func (bucket *Bucket) openFile(filepath string, mode int) (*os.File, error) {
+	return os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|mode, 0666)
 }
 
-func (bucket *Bucket) createAndGetFileInfo(filepath string) error {
+func (bucket *Bucket) createAndGetFileInfo(filepath string, mode int) (Bucket, error) {
 	fileInfo, flag := bucket.info(filepath)
 	if !flag {
 		dir := bucket.GetDir(filepath)
-		err := bucket.CreateDir(dir)
-		if err != nil {
-			return errors.New("文件夹创建失败")
+		_, dirFlag := bucket.info(dir)
+		if !dirFlag {
+			err := bucket.CreateDir(dir)
+			if err != nil {
+				return *bucket, errors.New("文件夹创建失败")
+			}
 		}
-		err = bucket.createNewFile(filepath)
+		err := bucket.createNewFile(filepath)
 		if err != nil {
-			return errors.New("文件创建失败")
+			return *bucket, errors.New("文件创建失败")
 		}
 		fileInfo, _ = bucket.info(filepath)
 	}
 	bucket.fileInfo = fileInfo
-	file, err := bucket.openFile(filepath)
+	file, err := bucket.openFile(filepath, mode)
 	if err != nil {
 		if bucket.chmodFile(filepath, err) != nil {
-			return errors.New("文件无访问权限")
+			return *bucket, errors.New("文件无访问权限")
 		}
-		file, err = bucket.openFile(filepath)
+		file, err = bucket.openFile(filepath, mode)
 		if err != nil {
-			return errors.New("打开文件失败")
+			return *bucket, errors.New("打开文件失败")
 		}
 	}
 	bucket.file = file
-	return nil
+	return *bucket, nil
 }
 
 func (bucket *Bucket) CreateFile() error {
-	return bucket.createAndGetFileInfo(bucket.filepath)
+	_, err := bucket.createAndGetFileInfo(bucket.filepath, os.O_APPEND)
+	return err
+}
+
+func (bucket *Bucket) closeFile() {
+	if bucket.file != nil {
+		bucket.file.Close()
+	}
+}
+
+func (bucket *Bucket) PutFile(source string, dest string) error {
+	bk1, err := bucket.createAndGetFileInfo(source, os.O_APPEND)
+	if err != nil {
+		return err
+	}
+	defer bk1.closeFile()
+	bk2, err := bucket.createAndGetFileInfo(dest, os.O_TRUNC)
+	if err != nil {
+		return err
+	}
+	defer bk2.closeFile()
+	buf := make([]byte, filesystem.BUFFERSIZE)
+	for {
+		n, err := bk1.file.Read(buf)
+		if err != nil && err != io.EOF {
+			return errors.New("读取文件失败")
+		}
+		if n == 0 {
+			break
+		}
+		if _, err := bk2.file.Write(buf[0:n]); err != nil {
+			return errors.New("数据写入失败")
+		}
+	}
+	return nil
 }
