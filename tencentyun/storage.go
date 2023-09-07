@@ -23,9 +23,10 @@ package tencentyun
 import (
 	"bytes"
 	"context"
+	"io"
+
 	"github.com/noOvertimeGroup/go-filesystem"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"io"
 )
 
 type Storage struct {
@@ -56,10 +57,7 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 	}
 
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			// TODO logging set log
-		}
+		_ = Body.Close()
 	}(response.Body)
 
 	_, err = io.Copy(buf, response.Body)

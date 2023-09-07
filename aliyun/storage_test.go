@@ -2,12 +2,13 @@ package aliyun
 
 import (
 	"context"
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/fs"
 	"os"
 	"testing"
+
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
