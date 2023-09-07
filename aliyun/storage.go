@@ -18,16 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package filesystem
+package aliyun
 
 import (
+	"bytes"
 	"context"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/noOvertimeGroup/go-filesystem"
 	"io"
 )
 
-type Storage interface {
-	// PutFile 给定文件流上传文件 要求小于1g 目标文件不存在则创建，目标文件存在则覆盖
-	PutFile(ctx context.Context, target string, file io.Reader) error
-	// GetFile 给定目标文件位置 获取文件流
-	GetFile(ctx context.Context, target string) (io.Reader, error)
+type Storage struct {
+	client *oss.Bucket
+}
+
+func NewStorage(bucket *oss.Bucket) filesystem.Storage {
+	return &Storage{
+		client: bucket,
+	}
+}
+
+func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
+	err := s.client.PutObject(target, file)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	response, err := s.client.GetObject(target)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(body io.ReadCloser) {
+		err := body.Close()
+		if err != nil {
+			// TODO logging set log
+			return
+		}
+	}(response)
+
+	_, err = io.Copy(buf, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
 }

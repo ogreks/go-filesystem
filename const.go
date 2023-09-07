@@ -20,14 +20,4 @@
 
 package filesystem
 
-import (
-	"context"
-	"io"
-)
-
-type Storage interface {
-	// PutFile 给定文件流上传文件 要求小于1g 目标文件不存在则创建，目标文件存在则覆盖
-	PutFile(ctx context.Context, target string, file io.Reader) error
-	// GetFile 给定目标文件位置 获取文件流
-	GetFile(ctx context.Context, target string) (io.Reader, error)
-}
+const FileLimitSize = 1024 * 1024 * 1024 * 1024

@@ -18,16 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package filesystem
+package errs
 
-import (
-	"context"
-	"io"
+import "errors"
+
+var (
+	// ErrFileLimit upload file stream exceed 1G size
+	ErrFileLimit = errors.New("a single file exceeds 1g")
+	// ErrFileClose the file is closed
+	ErrFileClose = errors.New("the file is closed")
 )
-
-type Storage interface {
-	// PutFile 给定文件流上传文件 要求小于1g 目标文件不存在则创建，目标文件存在则覆盖
-	PutFile(ctx context.Context, target string, file io.Reader) error
-	// GetFile 给定目标文件位置 获取文件流
-	GetFile(ctx context.Context, target string) (io.Reader, error)
-}

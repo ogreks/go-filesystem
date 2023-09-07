@@ -36,7 +36,15 @@ jobs:
         with:
           go-version: '1.20'
 
+      - name: Build
+        run: go build -v ./...
+
       - name: Test
+        env:
+          ALIYUN_OSS_ACCESSKEY_ID: ${{ secrets.ALIYUN_OSS_ACCESSKEY_ID }}
+          ALIYUN_OSS_ACCESSKEY_SECRET: ${{ secrets.ALIYUN_OSS_ACCESSKEY_SECRET }}
+          ALIYUN_OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
+          ALIYUN_OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
         run: go test -race -coverprofile=cover.out -v ./...
 
       - name: Codecov
