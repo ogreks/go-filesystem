@@ -26,9 +26,7 @@ import (
 	"errors"
 	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
 	"github.com/noOvertimeGroup/go-filesystem"
-	"github.com/noOvertimeGroup/go-filesystem/internal/errs"
 	"io"
-	"io/fs"
 	"path"
 	"strings"
 )
@@ -43,19 +41,7 @@ func NewStorage(client *obs.ObsClient) filesystem.Storage {
 	}
 }
 
-func (s *Storage) PutFile(ctx context.Context, target string, file fs.File) error {
-	fileInfo, err := file.Stat()
-	if err != nil {
-		if errors.Is(err, fs.ErrClosed) {
-			return errs.ErrFileClose
-		}
-		return err
-	}
-
-	if fileInfo.Size() > filesystem.FileLimitSize {
-		return errs.ErrFileLimit
-	}
-
+func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
 	if !path.IsAbs(target) {
 		return errors.New("给定服务路径不是相对路径")
 	}
@@ -69,7 +55,7 @@ func (s *Storage) PutFile(ctx context.Context, target string, file fs.File) erro
 	input.Key = target
 	input.Body = file
 
-	_, err = s.client.PutObject(input)
+	_, err := s.client.PutObject(input)
 	if err != nil {
 		return err
 	}

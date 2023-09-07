@@ -23,12 +23,9 @@ package aliyun
 import (
 	"bytes"
 	"context"
-	"errors"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/noOvertimeGroup/go-filesystem"
-	"github.com/noOvertimeGroup/go-filesystem/internal/errs"
 	"io"
-	"io/fs"
 )
 
 type Storage struct {
@@ -41,20 +38,8 @@ func NewStorage(bucket *oss.Bucket) filesystem.Storage {
 	}
 }
 
-func (s *Storage) PutFile(ctx context.Context, target string, file fs.File) error {
-	fileInfo, err := file.Stat()
-	if err != nil {
-		if errors.Is(err, fs.ErrClosed) {
-			return errs.ErrFileClose
-		}
-		return err
-	}
-
-	if fileInfo.Size() > filesystem.FileLimitSize {
-		return errs.ErrFileLimit
-	}
-
-	err = s.client.PutObject(target, file)
+func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
+	err := s.client.PutObject(target, file)
 	if err != nil {
 		return err
 	}
