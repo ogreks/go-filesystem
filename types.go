@@ -20,4 +20,8 @@
 
 package filesystem
 
-type FileSystem interface{}
+import "context"
+
+type FileSystem interface {
+	PutFile(ctx context.Context, target string, file string) error
+}
