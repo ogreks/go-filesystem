@@ -21,27 +21,15 @@
 package local
 
 import (
-	"github.com/noOvertimeGroup/go-filesystem"
-	"io"
-	"io/fs"
+	"fmt"
+	"testing"
 )
 
-type Storage struct {
-	client *Bucket
-}
-
-func NewFileSystem(filepath string) filesystem.FileSystem {
-	return &Storage{
-		client: &Bucket{filepath: filepath},
+func TestGetFileInfo(t *testing.T) {
+	s := &Storage{
+		client: &Bucket{
+			filepath: "./test/test.txt",
+		},
 	}
-}
-
-//获取文件信息
-func (s *Storage) GetFileInfo() fs.FileInfo {
-	info, _ := s.client.info(s.client.filepath)
-	return info
-}
-
-func (s *Storage) PutFile(newPath string, file io.ReadCloser) error {
-	return nil
+	fmt.Println(s.GetFileInfo().Name())
 }
