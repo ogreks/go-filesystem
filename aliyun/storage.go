@@ -23,9 +23,10 @@ package aliyun
 import (
 	"bytes"
 	"context"
+	"io"
+
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/noOvertimeGroup/go-filesystem"
-	"io"
 )
 
 type Storage struct {

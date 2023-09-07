@@ -22,8 +22,6 @@ SOURCE_COMMIT=.github/pre-commit
 TARGET_COMMIT=.git/hooks/pre-commit
 SOURCE_PUSH=.github/pre-push
 TARGET_PUSH=.git/hooks/pre-push
-SOURCE_MSG_COMMIT=.github/commit-msg
-TAGET_MSG_COMMIT=.git/hooks/commit-msg
 
 # copy pre-commit file.
 echo "设置 git pre-commit hooks..."
@@ -33,9 +31,6 @@ cp $SOURCE_COMMIT $TARGET_COMMIT
 echo "设置 git pre-push hooks..."
 cp $SOURCE_PUSH $TARGET_PUSH
 
-# copy commit-msg file.
-echo  "设置 git commit-msg hooks..."
-cp $SOURCE_MSG_COMMIT $TAGET_MSG_COMMIT
 
 # add permission to TARGET_PUSH and TARGET_COMMIT file.
 test -x $TARGET_PUSH || chmod +x $TARGET_PUSH

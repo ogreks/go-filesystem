@@ -21,7 +21,13 @@ lint:
 tidy:
 	@go mod tidy -v
 
+## fmt: go fmt code style
+.PHONY: fmt
+fmt:
+	@sh ./script/fmt.sh
+
 ## check: Check code formatting and introduce optimizations
 .PHONY: check
 check:
 	@$(MAKE) --no-print-directory tidy
+	@$(MAKE) --no-print-directory fmt

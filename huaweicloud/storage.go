@@ -24,11 +24,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
-	"github.com/noOvertimeGroup/go-filesystem"
 	"io"
 	"path"
 	"strings"
+
+	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
+	"github.com/noOvertimeGroup/go-filesystem"
 )
 
 type Storage struct {
@@ -83,10 +84,7 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 	}
 
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			// TODO logging set log
-		}
+		_ = Body.Close()
 	}(response.Body)
 
 	_, err = io.Copy(buf, response.Body)
