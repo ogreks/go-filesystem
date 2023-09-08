@@ -18,23 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package filesystem
+package local
 
 import (
-	"context"
-	"io"
+	"fmt"
+	"testing"
 )
 
-type Storage interface {
-	// PutFile 给定文件流上传文件 要求小于1g 目标文件不存在则创建，目标文件存在则覆盖
-	PutFile(ctx context.Context, target string, file io.Reader) error
-	// GetFile 给定目标文件位置 获取文件流
-	GetFile(ctx context.Context, target string) (io.Reader, error)
+func TestGetFileInfo(t *testing.T) {
+	s := &Storage{
+		client: &Bucket{
+			filepath: "./test/test.txt",
+		},
+	}
+	fmt.Println(s.GetFileInfo().Name())
 }
 
-const TimeFormat = "2006-01-02 15:04:05"
-
-const BUFFERSIZE = 1024
-
-//统一接口规范
-type FileSystem interface{}
+func TestPutFile(t *testing.T) {
+	s := &Storage{
+		client: &Bucket{
+			filepath: "./test/test.txt",
+		},
+	}
+	err := s.client.PutFile("./test/test.txt", "./test/test1.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+}
