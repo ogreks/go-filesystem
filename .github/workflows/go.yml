@@ -29,14 +29,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    with:
-      BUCKET: ${{ secrets.BUCKET }}
-      ALIYUN_OSS_ACCESSKEY_ID: ${{ secrets.ALIYUN_OSS_ACCESSKEY_ID }}
-      ALIYUN_OSS_ACCESSKEY_SECRET: ${{ secrets.ALIYUN_OSS_ACCESSKEY_SECRET }}
-      ALIYUN_OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
-      HUAWEI_OBS_ACCESSKEY_ID: ${{ secrets.HUAWEI_OBS_ACCESSKEY_ID }}
-      HUAWEI_OBS_ACCESSKEY_SECRET: ${{ secrets.HUAWEI_OBS_ACCESSKEY_SECRET }}
-      HUAWEI_OBS_ENDPOINT: ${{ secrets.HUAWEI_OBS_ENDPOINT }}
     env:
       BUCKET: ${{ secrets.BUCKET }}
       ALIYUN_OSS_ACCESSKEY_ID: ${{ secrets.ALIYUN_OSS_ACCESSKEY_ID }}
