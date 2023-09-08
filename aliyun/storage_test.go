@@ -19,6 +19,10 @@ var (
 )
 
 func TestStorage_PutFile(t *testing.T) {
+	if accessKeyID == "" {
+		t.Log("aliyun configure not found...")
+		return
+	}
 	assert.NotEmpty(t, accessKeyID)
 	assert.NotEmpty(t, accessKeySecret)
 	assert.NotEmpty(t, endpoint)
