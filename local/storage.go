@@ -21,27 +21,36 @@
 package local
 
 import (
+	"bytes"
+	"context"
 	"github.com/noOvertimeGroup/go-filesystem"
-	"io/fs"
+	"io"
+	"os"
 )
 
 type Storage struct {
-	client *Bucket
+	client Client
 }
 
-func NewFileSystem(filepath string) filesystem.FileSystem {
+func NewStorage(c Client) filesystem.Storage {
 	return &Storage{
-		client: &Bucket{filepath: filepath},
+		client: c,
 	}
 }
 
-//获取文件信息
-func (s *Storage) GetFileInfo() fs.FileInfo {
-	info, _ := s.client.info(s.client.filepath)
-	return info
+//复制文件，类似上传文件
+func (s *Storage) PutFile(tx context.Context, target string, file io.Reader) error {
+	return s.client.PutFile(target, file)
 }
 
-//复制文件，类似上传文件
-func (s *Storage) PutFile(source string, dest string) error {
-	return s.client.PutFile(source, dest)
+func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	b, err := s.client.CreateAndGetFileInfo(target, os.O_APPEND)
+	defer b.CloseFile()
+	_, err = io.Copy(buf, b.file)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
 }

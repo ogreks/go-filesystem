@@ -21,12 +21,43 @@
 package local
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestCreateFile(t *testing.T) {
-	storage := Bucket{
-		filepath: "./test/test.txt",
+func TestBucket_GetDir(t *testing.T) {
+	type fields struct {
+		filepath string
+		file     *os.File
+		fileInfo os.FileInfo
 	}
-	storage.CreateFile()
+	type args struct {
+		filepath string
+	}
+	filepath, _ := filepath.Abs("./bucket.go")
+	tt := struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		name:   "测试1",
+		fields: fields{},
+		args: args{
+			filepath: filepath,
+		},
+	}
+	fmt.Println(tt.want)
+	t.Run(tt.name, func(t *testing.T) {
+		b := &Bucket{
+			filepath: tt.fields.filepath,
+			file:     tt.fields.file,
+			fileInfo: tt.fields.fileInfo,
+		}
+		if got := b.GetDir(tt.args.filepath); got != tt.want {
+			t.Errorf("GetDir() = %v, want %v", got, tt.want)
+		}
+	})
 }
