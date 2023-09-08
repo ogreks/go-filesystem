@@ -22,18 +22,25 @@ SOURCE_COMMIT=.github/pre-commit
 TARGET_COMMIT=.git/hooks/pre-commit
 SOURCE_PUSH=.github/pre-push
 TARGET_PUSH=.git/hooks/pre-push
+SOURCE_COMMIT_MSG=.github/commit-msg
+TARGET_COMMIT_MSG=.git/hooks/commit-msg
 
-# copy pre-commit file if not exist.
+# copy pre-commit file.
 echo "设置 git pre-commit hooks..."
 cp $SOURCE_COMMIT $TARGET_COMMIT
 
-# copy pre-push file if not exist.
+# copy pre-push file.
 echo "设置 git pre-push hooks..."
 cp $SOURCE_PUSH $TARGET_PUSH
+
+# copy commit-msg file.
+echo "设置 git commit-msg hooks..."
+cp $SOURCE_COMMIT_MSG $TARGET_COMMIT_MSG
 
 # add permission to TARGET_PUSH and TARGET_COMMIT file.
 test -x $TARGET_PUSH || chmod +x $TARGET_PUSH
 test -x $TARGET_COMMIT || chmod +x $TARGET_COMMIT
+test -x $TARGET_COMMIT_MSG || chmod +x $TARGET_COMMIT_MSG
 
 echo "安装 golangci-lint..."
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2

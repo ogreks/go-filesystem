@@ -11,8 +11,23 @@ help:
 setup:
 	@sh ./script/setup.sh
 
+## lint: runs linters in parallel, reuses Go build cache and caches analysis results.
+.PHONY: lint
+lint:
+	golangci-lint run
+
+## tidy: go mod tidy command...
+.PHONY: tidy
+tidy:
+	@go mod tidy -v
+
+## fmt: go fmt code style
+.PHONY: fmt
+fmt:
+	@sh ./script/fmt.sh
+
 ## check: Check code formatting and introduce optimizations
 .PHONY: check
 check:
-	@$(MAKE) --no-print-directory fmt
 	@$(MAKE) --no-print-directory tidy
+	@$(MAKE) --no-print-directory fmt
