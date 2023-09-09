@@ -74,8 +74,8 @@ func TestStorage_PutFile(t *testing.T) {
 			file := tc.file(t)
 			err := s.PutFile(ctx, bucketName+tc.target, file)
 			assert.Equal(t, tc.wantErr, err)
-			tc.after(t, tc.target)
 			file.Close()
+			tc.after(t, tc.target)
 		})
 	}
 }

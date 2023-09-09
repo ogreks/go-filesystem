@@ -26,9 +26,6 @@ on:
   pull_request_target:
     types:
       - 'labeled'
-  pull_request_review:
-    types:
-      - submitted
     branches:
       - master
       - develop
@@ -36,7 +33,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'safe to test')
     env:
       BUCKET: ${{ secrets.BUCKET }}
       ALIYUN_OSS_ACCESSKEY_ID: ${{ secrets.ALIYUN_OSS_ACCESSKEY_ID }}
