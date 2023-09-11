@@ -22,10 +22,11 @@ package local
 
 import (
 	"errors"
-	"github.com/noOvertimeGroup/go-filesystem"
 	"io"
 	"os"
 	"path"
+
+	"github.com/noOvertimeGroup/go-filesystem"
 )
 
 type Client interface {
