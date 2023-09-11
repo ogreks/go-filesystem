@@ -39,7 +39,7 @@ func NewStorage(c Client) filesystem.Storage {
 	}
 }
 
-//复制文件，类似上传文件
+// 复制文件，类似上传文件
 func (s *Storage) PutFile(tx context.Context, target string, file io.Reader) error {
 	return s.client.PutFile(target, file)
 }
@@ -47,6 +47,9 @@ func (s *Storage) PutFile(tx context.Context, target string, file io.Reader) err
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 	b, err := s.client.CreateAndGetFileInfo(target, os.O_APPEND)
+	if err != nil {
+		return nil, err
+	}
 	defer b.CloseFile()
 	_, err = io.Copy(buf, b.file)
 	if err != nil {
