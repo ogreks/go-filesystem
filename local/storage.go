@@ -18,20 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package filesystem
+package local
 
 import (
+	"bytes"
 	"context"
 	"io"
+	"os"
+
+	"github.com/noOvertimeGroup/go-filesystem"
 )
 
-type Storage interface {
-	// PutFile 给定文件流上传文件 要求小于1g 目标文件不存在则创建，目标文件存在则覆盖
-	PutFile(ctx context.Context, target string, file io.Reader) error
-	// GetFile 给定目标文件位置 获取文件流
-	GetFile(ctx context.Context, target string) (io.Reader, error)
+type Storage struct {
+	client Client
 }
 
-const TimeFormat = "2006-01-02 15:04:05"
+func NewStorage(c Client) filesystem.Storage {
+	return &Storage{
+		client: c,
+	}
+}
 
-const BUFFERSIZE = 1024
+// 复制文件，类似上传文件
+func (s *Storage) PutFile(tx context.Context, target string, file io.Reader) error {
+	return s.client.PutFile(target, file)
+}
+
+func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	b, err := s.client.CreateAndGetFileInfo(target, os.O_APPEND)
+	if err != nil {
+		return nil, err
+	}
+	defer b.CloseFile()
+	_, err = io.Copy(buf, b.file)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
+}
