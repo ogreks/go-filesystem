@@ -43,13 +43,13 @@ func NewStorage(client *obs.ObsClient) filesystem.Storage {
 }
 
 func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
-	if !path.IsAbs(target) {
+	if path.IsAbs(target) {
 		return errors.New("给定服务路径不是相对路径")
 	}
 
 	index := strings.Index(target, "/")
 	bucket := target[:index]
-	target = target[index:]
+	target = target[index+1:]
 
 	input := &obs.PutObjectInput{}
 	input.Bucket = bucket
