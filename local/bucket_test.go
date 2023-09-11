@@ -18,20 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package filesystem
+package local
 
 import (
-	"context"
-	"io"
+	"os"
+	"path/filepath"
+	"testing"
 )
 
-type Storage interface {
-	// PutFile 给定文件流上传文件 要求小于1g 目标文件不存在则创建，目标文件存在则覆盖
-	PutFile(ctx context.Context, target string, file io.Reader) error
-	// GetFile 给定目标文件位置 获取文件流
-	GetFile(ctx context.Context, target string) (io.Reader, error)
+func TestBucket_GetDir(t *testing.T) {
+	type fields struct {
+		filepath string
+		file     *os.File
+		fileInfo os.FileInfo
+	}
+	type args struct {
+		filepath string
+	}
+	filepath, _ := filepath.Abs("./bucket.go")
+	tt := struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		name:   "测试1",
+		fields: fields{},
+		args: args{
+			filepath: filepath,
+		},
+		want: ".",
+	}
+	t.Run(tt.name, func(t *testing.T) {
+		b := &Bucket{
+			filepath: tt.fields.filepath,
+			file:     tt.fields.file,
+			fileInfo: tt.fields.fileInfo,
+		}
+		if got := b.GetDir(tt.args.filepath); got != tt.want {
+			t.Errorf("GetDir() = %v, want %v", got, tt.want)
+		}
+	})
 }
-
-const TimeFormat = "2006-01-02 15:04:05"
-
-const BUFFERSIZE = 1024
