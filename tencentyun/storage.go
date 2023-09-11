@@ -41,7 +41,7 @@ func NewStorage(client *cos.Client) filesystem.Storage {
 
 func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
 	// TODO return http.Response handle error
-	_, err := s.client.Object.Put(ctx, target, file, &cos.ObjectPutOptions{})
+	_, err := s.client.Object.Put(ctx, target, file, nil)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) er
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
 	buf := new(bytes.Buffer)
-	response, err := s.client.Object.Get(ctx, target, &cos.ObjectGetOptions{})
+	response, err := s.client.Object.Get(ctx, target, nil)
 	if err != nil {
 		return nil, err
 	}
