@@ -47,6 +47,7 @@ jobs:
       TENCENT_OSS_ENDPOINT: ${{ secrets.TENCENT_OSS_ENDPOINT }}
       QINIU_OSS_ACCESSKEY_ID: ${{ secrets.QINIU_OSS_ACCESSKEY_ID }}
       QINIU_OSS_ACCESSKEY_SECRET: ${{ secrets.QINIU_OSS_ACCESSKEY_SECRET }}
+      QINUI_OSS_ENDOPOINT: ${{ secrets.QINUI_OSS_ENDOPOINT }}
 
     steps:
       - uses: actions/checkout@v2

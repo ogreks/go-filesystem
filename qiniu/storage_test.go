@@ -32,15 +32,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// 自定义返回值结构体
-type MyPutRet struct {
-	Key    string
-	Hash   string
-	Fsize  int
-	Bucket string
-	Name   string
-}
-
 var (
 	accessKeyID     = os.Getenv("QINIU_OSS_ACCESSKEY_ID")
 	accessKeySecret = os.Getenv("QINIU_OSS_ACCESSKEY_SECRET")
@@ -48,11 +39,8 @@ var (
 	bucketName      = os.Getenv("BUCKET")
 )
 
-type S Client
-
 func TestStorage_PutFile2(t *testing.T) {
-
-	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" {
+	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" {
 		t.Log("qiniu kodo configure not found...")
 		return
 	}
@@ -73,18 +61,14 @@ func TestStorage_PutFile2(t *testing.T) {
 	region, ok := storage.GetRegionByID(storage.RegionID(endpoint))
 	assert.Equal(t, true, ok)
 	cfg.Region = &region
-	// 是否使用https域名
-	cfg.UseHTTPS = true
-	// 上传是否使用CDN上传加速
-	cfg.UseCdnDomains = false
 	NewFormUploader := storage.NewFormUploader(&cfg)
 	NewBucketManager := storage.NewBucketManager(mac, &cfg)
 
-	s := NewStorage((*Client)(&S{
+	s := NewStorage(&Client{
 		NewFormUploader,
 		NewBucketManager,
 		upToken,
-	}))
+	})
 
 	testCase := []struct {
 		name       string
