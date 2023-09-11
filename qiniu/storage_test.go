@@ -51,7 +51,7 @@ type S Client
 
 func TestStorage_PutFile2(t *testing.T) {
 
-	if accessKeyID == "" || accessKeySecret == "" {
+	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" {
 		t.Log("qiniu kodo configure not found...")
 		return
 	}

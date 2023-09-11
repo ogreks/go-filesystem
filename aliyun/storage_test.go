@@ -39,7 +39,7 @@ var (
 )
 
 func TestStorage_PutFile(t *testing.T) {
-	if accessKeyID == "" {
+	if accessKeyID == "" || accessKeySecret == "" || endpoint == "" || bucketName == "" {
 		t.Log("aliyun oss configure not found...")
 		return
 	}

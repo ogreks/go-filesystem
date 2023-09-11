@@ -40,7 +40,7 @@ var (
 )
 
 func TestStorage_PutFile(t *testing.T) {
-	if accessKeyID == "" {
+	if accessKeyID == "" || accessKeySecret == "" || endpoint == "" {
 		t.Log("tencent oss configure not found...")
 		return
 	}
