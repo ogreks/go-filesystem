@@ -16,8 +16,7 @@ type Client struct {
 }
 
 type Storage struct {
-	client  *Client
-	upToken string
+	client *Client
 }
 
 func NewStorage(client *Client) filesystem.Storage {
