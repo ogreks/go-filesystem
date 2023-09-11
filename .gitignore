@@ -23,5 +23,5 @@ go.work
 # code editor
 .vscode
 .idea
-go.sum
+
 
