@@ -73,7 +73,7 @@ func TestStorage_PutFile2(t *testing.T) {
 		wantErr    error
 	}{
 		{
-			name: "test storage put file",
+			name: "test qiniu storage put file",
 			before: func(t *testing.T, target string) {
 				create, err := os.Create("test_put.txt")
 				require.NoError(t, err)
@@ -95,6 +95,7 @@ func TestStorage_PutFile2(t *testing.T) {
 	}
 
 	for _, tc := range testCase {
+
 		t.Run(tc.name, func(t *testing.T) {
 			//new上传类
 			ctx := context.TODO()
