@@ -23,17 +23,29 @@ name: Go
 on: 
   push:
     branches: [master, develop]
-  pull_request:
-    branches: [master, develop]
+  pull_request_target:
+    types:
+      - 'labeled'
+  pull_request_review:
+    types:
+      - submitted
+    branches:
+      - master
+      - develop
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test')
     env:
+      BUCKET: ${{ secrets.BUCKET }}
       ALIYUN_OSS_ACCESSKEY_ID: ${{ secrets.ALIYUN_OSS_ACCESSKEY_ID }}
       ALIYUN_OSS_ACCESSKEY_SECRET: ${{ secrets.ALIYUN_OSS_ACCESSKEY_SECRET }}
       ALIYUN_OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
-      ALIYUN_OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
+      HUAWEI_OBS_ACCESSKEY_ID: ${{ secrets.HUAWEI_OBS_ACCESSKEY_ID }}
+      HUAWEI_OBS_ACCESSKEY_SECRET: ${{ secrets.HUAWEI_OBS_ACCESSKEY_SECRET }}
+      HUAWEI_OBS_ENDPOINT: ${{ secrets.HUAWEI_OBS_ENDPOINT }}
+
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go
