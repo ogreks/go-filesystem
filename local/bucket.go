@@ -22,10 +22,11 @@ package local
 
 import (
 	"errors"
-	"github.com/noOvertimeGroup/go-filesystem"
 	"io"
 	"os"
 	"path"
+
+	"github.com/noOvertimeGroup/go-filesystem"
 )
 
 type Client interface {
@@ -43,7 +44,7 @@ type Bucket struct {
 	fileInfo os.FileInfo
 }
 
-//判断文件文件夹是否存在
+// 判断文件文件夹是否存在
 func (b *Bucket) Info(filepath string) (os.FileInfo, bool) {
 	fileInfo, err := os.Stat(filepath)
 	if err != nil {
@@ -53,12 +54,12 @@ func (b *Bucket) Info(filepath string) (os.FileInfo, bool) {
 	return fileInfo, true
 }
 
-//创建文件夹
+// 创建文件夹
 func (b *Bucket) CreateDir(filepath string) error {
 	return os.Mkdir(filepath, os.ModePerm)
 }
 
-//判断是否有权限
+// 判断是否有权限
 func (b *Bucket) chmodFile(filepath string, err error) error {
 	if os.IsPermission(err) {
 		err := os.Chmod(filepath, 0666)
@@ -74,7 +75,7 @@ func (b *Bucket) GetDir(filepath string) string {
 	return path.Dir(filepath)
 }
 
-//创建新的文件
+// 创建新的文件
 func (b *Bucket) createNewFile(filepath string) error {
 	_, err := os.Create(filepath)
 	return err
@@ -117,7 +118,7 @@ func (b *Bucket) CreateAndGetFileInfo(filepath string, mode int) (*Bucket, error
 }
 
 func (b *Bucket) CreateFile(filepath string) error {
-	_, err := b.CreateAndGetFileInfo(filepath, os.O_APPEND)
+	_, err := os.Create(filepath)
 	return err
 }
 

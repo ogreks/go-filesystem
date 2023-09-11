@@ -23,9 +23,10 @@ package local
 import (
 	"bytes"
 	"context"
-	"github.com/noOvertimeGroup/go-filesystem"
 	"io"
 	"os"
+
+	"github.com/noOvertimeGroup/go-filesystem"
 )
 
 type Storage struct {

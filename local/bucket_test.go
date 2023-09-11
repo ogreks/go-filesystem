@@ -21,7 +21,6 @@
 package local
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -48,8 +47,8 @@ func TestBucket_GetDir(t *testing.T) {
 		args: args{
 			filepath: filepath,
 		},
+		want: ".",
 	}
-	fmt.Println(tt.want)
 	t.Run(tt.name, func(t *testing.T) {
 		b := &Bucket{
 			filepath: tt.fields.filepath,
