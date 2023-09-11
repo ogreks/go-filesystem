@@ -36,6 +36,7 @@ type Client interface {
 	Info(filepath string) (os.FileInfo, bool)
 	CreateAndGetFileInfo(filepath string, mode int) (*Bucket, error)
 	PutFile(target string, file io.Reader) error
+	CopyFile(source string, dest string) error
 }
 
 type Bucket struct {
@@ -150,7 +151,7 @@ func (b *Bucket) PutFile(target string, file io.Reader) error {
 	return nil
 }
 
-func (b *Bucket) copyFile(source string, dest string) error {
+func (b *Bucket) CopyFile(source string, dest string) error {
 	bk1, err := b.CreateAndGetFileInfo(source, os.O_APPEND)
 	if err != nil {
 		return err
