@@ -2,13 +2,14 @@ package qiniu
 
 import (
 	"context"
+	"io/fs"
+	"os"
+	"testing"
+
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/fs"
-	"os"
-	"testing"
 )
 
 // 自定义返回值结构体

@@ -3,9 +3,10 @@ package qiniu
 import (
 	"bytes"
 	"context"
+	"io"
+
 	"github.com/noOvertimeGroup/go-filesystem"
 	"github.com/qiniu/go-sdk/v7/storage"
-	"io"
 )
 
 type Client struct {
