@@ -15,12 +15,12 @@ var (
 	accessKeyID     = os.Getenv("ALIYUN_OSS_ACCESSKEY_ID")
 	accessKeySecret = os.Getenv("ALIYUN_OSS_ACCESSKEY_SECRET")
 	endpoint        = os.Getenv("ALIYUN_OSS_ENDPOINT")
-	bucketName      = os.Getenv("ALIYUN_OSS_BUCKET")
+	bucketName      = os.Getenv("BUCKET")
 )
 
 func TestStorage_PutFile(t *testing.T) {
 	if accessKeyID == "" {
-		t.Log("aliyun configure not found...")
+		t.Log("aliyun oss configure not found...")
 		return
 	}
 	assert.NotEmpty(t, accessKeyID)
@@ -43,7 +43,7 @@ func TestStorage_PutFile(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "test storage put file",
+			name: "test aliyun oss storage put file",
 			before: func(t *testing.T, target string) {
 				create, err := os.Create("put.txt")
 				require.NoError(t, err)
