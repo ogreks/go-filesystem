@@ -44,6 +44,7 @@ type MyPutRet struct {
 var (
 	accessKeyID     = os.Getenv("QINIU_OSS_ACCESSKEY_ID")
 	accessKeySecret = os.Getenv("QINIU_OSS_ACCESSKEY_SECRET")
+	endpoint        = os.Getenv("QINUI_OSS_ENDOPOINT") // cn-east-2
 	bucketName      = os.Getenv("BUCKET")
 )
 
@@ -69,7 +70,9 @@ func TestStorage_PutFile2(t *testing.T) {
 
 	cfg := storage.Config{}
 	// 空间对应的机房
-	cfg.Region = &storage.ZoneHuanan
+	region, ok := storage.GetRegionByID(storage.RegionID(endpoint))
+	assert.Equal(t, true, ok)
+	cfg.Region = &region
 	// 是否使用https域名
 	cfg.UseHTTPS = true
 	// 上传是否使用CDN上传加速
@@ -115,7 +118,6 @@ func TestStorage_PutFile2(t *testing.T) {
 	}
 
 	for _, tc := range testCase {
-
 		t.Run(tc.name, func(t *testing.T) {
 			//new上传类
 			ctx := context.TODO()
