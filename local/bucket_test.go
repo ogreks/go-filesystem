@@ -22,8 +22,9 @@ package local
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBucket_GetDir(t *testing.T) {
@@ -35,7 +36,7 @@ func TestBucket_GetDir(t *testing.T) {
 	type args struct {
 		filepath string
 	}
-	filepath, _ := filepath.Abs("./bucket.go")
+	filepath := "./bucket.go"
 	tt := struct {
 		name   string
 		fields fields
@@ -55,8 +56,7 @@ func TestBucket_GetDir(t *testing.T) {
 			file:     tt.fields.file,
 			fileInfo: tt.fields.fileInfo,
 		}
-		if got := b.GetDir(tt.args.filepath); got != tt.want {
-			t.Errorf("GetDir() = %v, want %v", got, tt.want)
-		}
+		got := b.GetDir(tt.args.filepath)
+		assert.Equal(t, tt.want, got)
 	})
 }
