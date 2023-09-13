@@ -21,42 +21,19 @@
 package local
 
 import (
-	"os"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"io"
+	"io/fs"
 )
 
-func TestBucket_GetDir(t *testing.T) {
-	type fields struct {
-		filepath string
-		file     *os.File
-		fileInfo os.FileInfo
-	}
-	type args struct {
-		filepath string
-	}
-	filepath := "./bucket.go"
-	tt := struct {
-		name   string
-		fields fields
-		args   args
-		want   string
-	}{
-		name:   "测试1",
-		fields: fields{},
-		args: args{
-			filepath: filepath,
-		},
-		want: ".",
-	}
-	t.Run(tt.name, func(t *testing.T) {
-		b := &Bucket{
-			filepath: tt.fields.filepath,
-			file:     tt.fields.file,
-			fileInfo: tt.fields.fileInfo,
-		}
-		got := b.GetDir(tt.args.filepath)
-		assert.Equal(t, tt.want, got)
-	})
+type FS interface {
+}
+
+type DirEntryFs interface {
+	Info(dir string) (fs.FileInfo, error)
+	Create(dir string) error
+	CreateOverlay(dir string) error
+}
+
+type FileFs interface {
+	Create(driver DirEntry, file io.Reader) error
 }

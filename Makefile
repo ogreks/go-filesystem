@@ -26,6 +26,11 @@ tidy:
 fmt:
 	@sh ./script/fmt.sh
 
+## ut: go test -race ./...
+.Phony: ut
+ut:
+	@go test -race ./...
+
 ## check: Check code formatting and introduce optimizations
 .PHONY: check
 check:
