@@ -19,3 +19,12 @@
 // SOFTWARE.
 
 package local
+
+import "io"
+
+type FileFs interface {
+	Create(driver DirEntry, file io.Reader) error
+}
+
+type File struct {
+}

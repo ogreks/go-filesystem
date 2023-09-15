@@ -63,14 +63,14 @@ func TestStorage_PutFile(t *testing.T) {
 		{
 			name: "test huawei obs storage put file",
 			before: func(t *testing.T, target string) {
-				create, err := os.Create("put.txt")
+				create, err := os.Create("/tmp/put.txt")
 				require.NoError(t, err)
 				defer create.Close()
 				_, err = create.WriteString("the test file...")
 				require.NoError(t, err)
 			},
 			after: func(t *testing.T, target string) {
-				require.NoError(t, os.Remove("put.txt"))
+				require.NoError(t, os.Remove("/tmp/put.txt"))
 				o := &obs.DeleteObjectInput{}
 				o.Bucket = bucketName
 				o.Key = target[1:]
@@ -79,7 +79,7 @@ func TestStorage_PutFile(t *testing.T) {
 			},
 			target: "/test/put.txt",
 			file: func(t *testing.T) fs.File {
-				open, err := os.Open("put.txt")
+				open, err := os.Open("/tmp/put.txt")
 				require.NoError(t, err)
 				return open
 			},
@@ -88,14 +88,17 @@ func TestStorage_PutFile(t *testing.T) {
 
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
+			// if exist err this not run...
+			defer tc.after(t, tc.target)
+
 			ctx := context.TODO()
 			s := NewStorage(client)
 			tc.before(t, tc.target)
 			file := tc.file(t)
+			// if the file is open, it needs to be closed
+			defer file.Close()
 			err := s.PutFile(ctx, bucketName+tc.target, file)
 			assert.Equal(t, tc.wantErr, err)
-			file.Close()
-			tc.after(t, tc.target)
 		})
 	}
 }

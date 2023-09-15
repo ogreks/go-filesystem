@@ -20,20 +20,17 @@
 
 package local
 
-import (
-	"io"
-	"io/fs"
-)
+var _ FS = (*Client)(nil)
 
 type FS interface {
 }
 
-type DirEntryFs interface {
-	Info(dir string) (fs.FileInfo, error)
-	Create(dir string) error
-	CreateOverlay(dir string) error
+type Client struct {
+	dir DirEntryFS
 }
 
-type FileFs interface {
-	Create(driver DirEntry, file io.Reader) error
+func NewFS(dir DirEntryFS) FS {
+	return &Client{
+		dir: dir,
+	}
 }

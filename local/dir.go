@@ -28,7 +28,14 @@ import (
 	"path/filepath"
 )
 
-var _ DirEntryFs = (*DirEntry)(nil)
+var _ DirEntryFS = (*DirEntry)(nil)
+
+type DirEntryFS interface {
+	Info(dir string) (fs.FileInfo, error)
+	Create(dir string) error
+	CreateOverlay(dir string) error
+	Delete(dir string) error
+}
 
 type DirEntry struct {
 	driver string
@@ -66,17 +73,12 @@ func (d *DirEntry) CreateOverlay(dir string) error {
 	return nil
 }
 
-//func (d *DirEntry) delete(dir string) error {
-//	// TODO delete files or folder
-//	panic(nil)
-//}
-//
-//func (d *DirEntry) listFolder() {
-//	// TODO list folder (bucket)
-//	panic(nil)
-//}
+// Delete folder
+func (d *DirEntry) Delete(dir string) error {
+	return os.Remove(d.name(dir))
+}
 
-// NewDirEntry returns DirEntryFs or an error requires an absolute path given
+// NewDirEntry returns DirEntryFS or an error requires an absolute path given
 // driver is root path
 func NewDirEntry(driver string) (*DirEntry, error) {
 	if !filepath.IsAbs(driver) {
