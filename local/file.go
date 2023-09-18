@@ -20,11 +20,43 @@
 
 package local
 
-import "io"
+import (
+	"io"
+	"os"
+	"time"
+)
 
-type FileFs interface {
-	Create(driver DirEntry, file io.Reader) error
+// File represents a file in the filesystem.
+type File interface {
+	io.Closer
+	io.Reader
+	io.ReaderAt
+	io.Seeker
+	io.Writer
+	io.WriterAt
+
+	Name() string
+	Readdir(count int) ([]os.FileInfo, error)
+	ReadDirNames(n int) ([]string, error)
+	Stat() (os.FileInfo, error)
+	Sync() error
+	Truncate(size int64) error
+	WriteString(s string) (ret int, err error)
 }
 
-type File struct {
+// FS is the filesystem interface.
+// Any simulated or real filesystem should implement this interface.
+type FS interface {
+	Create(name string) (File, error)
+	Mkdir(name string, perm os.FileMode) error
+	MkdirAll(path string, perm os.FileMode) error
+	Open(name string) (File, error)
+	OpenFile(name string, flag int, perm os.FileMode) (File, error)
+	Remove(name string) error
+	RemoveAll(path string) error
+	Rename(oldName, newName string) error
+	Name() string
+	Chmod(name string, mode os.FileMode) error
+	Chown(name string, uid, gid int) error
+	ChtTimes(name string, atime time.Time, mtime time.Time) error
 }

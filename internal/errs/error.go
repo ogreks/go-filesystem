@@ -20,11 +20,23 @@
 
 package errs
 
-import "errors"
+import (
+	"errors"
+	"os"
+)
 
 var (
 	// ErrFileLimit upload file stream exceed 1G size
 	ErrFileLimit = errors.New("a single file exceeds 1g")
 	// ErrFileClose the file is closed
 	ErrFileClose = errors.New("the file is closed")
+	// ErrFileClosed file is closed
+	ErrFileClosed = errors.New("file is closed")
+	// ErrOutOfRange out of range
+	ErrOutOfRange = errors.New("out of range")
+	// ErrTooLarge too large
+	ErrTooLarge          = errors.New("too large")
+	ErrFileNotFound      = os.ErrNotExist
+	ErrFileExists        = os.ErrExist
+	ErrDestinationExists = os.ErrExist
 )
