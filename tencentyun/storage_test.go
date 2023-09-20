@@ -72,20 +72,20 @@ func TestStorage_PutFile(t *testing.T) {
 		{
 			name: "test tencent oss storage put file",
 			before: func(t *testing.T, target string) {
-				create, err := os.Create("put.txt")
+				create, err := os.Create("/tmp/test_put.txt")
 				require.NoError(t, err)
 				defer create.Close()
 				_, err = create.WriteString("the test file...")
 				require.NoError(t, err)
 			},
 			after: func(t *testing.T, target string) {
-				require.NoError(t, os.Remove("put.txt"))
+				require.NoError(t, os.Remove("/tmp/test_put.txt"))
 				_, err := client.Object.Delete(context.Background(), target)
 				require.NoError(t, err)
 			},
 			target: "test/put.txt",
 			file: func(t *testing.T) fs.File {
-				open, err := os.Open("put.txt")
+				open, err := os.Open("/tmp/test_put.txt")
 				require.NoError(t, err)
 				return open
 			},
@@ -94,14 +94,17 @@ func TestStorage_PutFile(t *testing.T) {
 
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
+			// if exist err this not run...
+			defer tc.after(t, tc.target)
 			ctx := context.Background()
 			s := NewStorage(client)
 			tc.before(t, tc.target)
+
 			file := tc.file(t)
+			// if the file is open, it needs to be closed
+			defer file.Close()
 			err := s.PutFile(ctx, tc.target, file)
 			assert.Equal(t, tc.wantErr, err)
-			file.Close()
-			tc.after(t, tc.target)
 		})
 	}
 }

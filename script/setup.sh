@@ -38,7 +38,7 @@ cp $SOURCE_PUSH $TARGET_PUSH
 echo "设置 git commit-msg hooks..."
 cp $SOURCE_COMMIT_MSG $TARGET_COMMIT_MSG
 
-# add permission to TARGET_PUSH and TARGET_COMMIT file.
+# add permission to TARGET_PUSH and TARGET_COMMIT and TARGET_COMMIT_MSG file.
 test -x $TARGET_PUSH || chmod +x $TARGET_PUSH
 test -x $TARGET_COMMIT || chmod +x $TARGET_COMMIT
 test -x $TARGET_COMMIT_MSG || chmod +x $TARGET_COMMIT_MSG
