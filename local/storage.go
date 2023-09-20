@@ -29,17 +29,17 @@ import (
 )
 
 type Storage struct {
-	c FS
+	client FS
 }
 
-func NewStorage(c FS) filesystem.Storage {
+func NewStorage(client FS) filesystem.Storage {
 	return &Storage{
-		c: c,
+		client: client,
 	}
 }
 
 func (s Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
-	f, err := s.c.Create(target)
+	f, err := s.client.Create(target)
 	if err != nil {
 		return err
 	}
@@ -53,5 +53,5 @@ func (s Storage) PutFile(ctx context.Context, target string, file io.Reader) err
 }
 
 func (s Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-	return s.c.Open(target)
+	return s.client.Open(target)
 }

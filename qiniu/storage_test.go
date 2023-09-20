@@ -71,13 +71,12 @@ func TestStorage_PutFile2(t *testing.T) {
 	})
 
 	testCase := []struct {
-		name       string
-		before     func(t *testing.T, target string)
-		after      func(t *testing.T, target string)
-		target     string
-		bucketFile string
-		file       func(t *testing.T) fs.File
-		wantErr    error
+		name    string
+		before  func(t *testing.T, target string)
+		after   func(t *testing.T, target string)
+		target  string
+		file    func(t *testing.T) fs.File
+		wantErr error
 	}{
 		{
 			name: "test qiniu storage put file",
