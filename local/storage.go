@@ -19,3 +19,39 @@
 // SOFTWARE.
 
 package local
+
+import (
+	"bufio"
+	"context"
+	"io"
+
+	"github.com/noOvertimeGroup/go-filesystem"
+)
+
+type Storage struct {
+	c FS
+}
+
+func NewStorage(c FS) filesystem.Storage {
+	return &Storage{
+		c: c,
+	}
+}
+
+func (s Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
+	f, err := s.c.Create(target)
+	if err != nil {
+		return err
+	}
+
+	b := bufio.NewScanner(file)
+	if _, err = f.Write(b.Bytes()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	return s.c.Open(target)
+}
