@@ -21,40 +21,37 @@
 package local
 
 import (
-	"bytes"
+	"bufio"
 	"context"
 	"io"
-	"os"
 
 	"github.com/noOvertimeGroup/go-filesystem"
 )
 
 type Storage struct {
-	client Client
+	client FS
 }
 
-func NewStorage(c Client) filesystem.Storage {
+func NewStorage(client FS) filesystem.Storage {
 	return &Storage{
-		client: c,
+		client: client,
 	}
 }
 
-// 复制文件，类似上传文件
-func (s *Storage) PutFile(tx context.Context, target string, file io.Reader) error {
-	return s.client.PutFile(target, file)
+func (s Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
+	f, err := s.client.Create(target)
+	if err != nil {
+		return err
+	}
+
+	b := bufio.NewScanner(file)
+	if _, err = f.Write(b.Bytes()); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-	buf := new(bytes.Buffer)
-	b, err := s.client.CreateAndGetFileInfo(target, os.O_APPEND)
-	if err != nil {
-		return nil, err
-	}
-	defer b.CloseFile()
-	_, err = io.Copy(buf, b.file)
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
+func (s Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	return s.client.Open(target)
 }

@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Copyright (c) 2023 noOvertimeGroup
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,109 +20,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-has_errors=0
-
-# 获取git暂存的所有go代码
-allgofiles=$(git diff --cached --name-only --diff-filter=ACM | grep '.go$' | grep -v 'vendor*' | grep -v '*.pb.go')
-
-# 高版本兼容
-# shellcheck disable=SC2039
-declare -a gofiles
-# shellcheck disable=SC2039
-declare -a godirs
-# shellcheck disable=SC2068
-# shellcheck disable=SC2039
-for allfile in ${allgofiles[@]}; do
-    gofiles+=("$allfile")
-    dir=$(dirname "$allfile")
-    godirs+=("$dir")
-done
-
-# shellcheck disable=SC2039
-# shellcheck disable=SC2178
-godirs=$(echo "${godirs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
-# shellcheck disable=SC2128
-[ -z "$gofiles" ] && exit 0
-
-check_gofmt() {
-    echo "run check_gofmt..."
-    # shellcheck disable=SC2068
-    unformatted=$(gofmt -l ${gofiles[@]})
-    if [ -n "$unformatted" ]; then
-        # shellcheck disable=SC2028
-        echo >&2 "gofmt Fail:\n Run following command:"
-        # shellcheck disable=SC2068
-        # shellcheck disable=SC2039
-        for f in ${unformatted[@]}; do
-            echo >&2 " gofmt -w $PWD/$f"
-        done
-        echo "\n"
-        has_errors=1
-    fi
+# 函数：运行测试并返回结果
+run_tests() {
+  local tests="go test ./... -race -cover -failfast"
+  printf "Running go test...\n"
+  $tests
 }
 
-check_goimports() {
-    echo "run check_goimports..."
-    if goimports >/dev/null 2>&1; then
-        # shellcheck disable=SC2068
-        unimports=$(goimports -l ${gofiles[@]})
-        if [  -n "$unimports" ]; then
-            echo >&2 "goimports Fail:\nRun following command:"
-            # shellcheck disable=SC2068
-            for f in ${unimports[@]};do
-                echo >&2 " goimports -w $PWD/$f"
-            done
-            echo "\n"
-            has_errors=1
-        fi
-    else
-        echo 'Error: goimports not install. Run: "go install golang.org/x/tools/cmd/goimports@latest"' >&2
-        exit 1
-    fi
+# 函数：运行代码检查并返回结果
+run_linter() {
+  local linter="golangci-lint run"
+  printf "Running go linter...\n"
+  $linter
 }
 
-check_govet() {
-    echo "run check govet..."
-    show_vet_header=true
-    # shellcheck disable=SC2068
-    for dir in ${godirs[@]}; do
-        vet=$(go vet $PWD/$dir 2>&1)
-        if [ -n "$vet" -a $show_vet_header = true ]; then
-            echo "govet Fail:"
-            show_vet_header=false
-        fi
-        if [ -n "$vet" ]; then
-            echo "$vet\n"
-            has_errors=1
-        fi
-    done
-}
+remote=$1
+url=$2
+printf >&2 "Try pushing $url to $remote\n"
 
-check_gotest() {
-    echo "run check_gotest..."
-    test=$(go test ./... -race -cover -failfast)
-    if [ $? -ne 0 ]; then
-        echo "go test Fail:"
-        echo "$test\n"
-        has_errors=1
-    fi
-}
+# 运行测试并检查结果
+run_tests
+if [ $? -ne 0 ]; then
+  printf >&2 "Tests failed\n"
+  printf >&2 "Check code to pass tests\n"
+  exit 1
+fi
 
-check_golangcilint() {
-    echo "run check_golangcilint..."
-    if golangci-lint run >/dev/null 2>&1; then
-        echo 'golangci-lint run passed'
-    else
-        echo 'Error: golangci-lint run failed. Run: "golangci-lint run"' >&2
-        has_errors=1
-    fi
-}
+# 运行代码检查并检查结果
+run_linter
+if [ $? -ne 0 ]; then
+  printf >&2 "Linter failed\n"
+  printf >&2 "Check code to pass linter\n"
+  exit 1
+fi
 
-check_gofmt
-check_goimports
-check_govet
-check_gotest
-check_golangcilint
-
-exit $has_errors
+exit 0

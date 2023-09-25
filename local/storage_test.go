@@ -19,3 +19,64 @@
 // SOFTWARE.
 
 package local
+
+import (
+	"context"
+	"io/fs"
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestStorage_PutFile(t *testing.T) {
+	testCase := []struct {
+		name       string
+		before     func(t *testing.T, target string)
+		after      func(t *testing.T, target string)
+		target     string
+		bucketFile string
+		file       func(t *testing.T) fs.File
+		wantErr    error
+	}{
+		{
+			name: "test local storage put file",
+			before: func(t *testing.T, target string) {
+				create, err := os.Create("/tmp/test_put.txt")
+				require.NoError(t, err)
+				defer create.Close()
+				_, err = create.WriteString("the test file...")
+				require.NoError(t, err)
+			},
+			after: func(t *testing.T, target string) {
+				require.NoError(t, os.Remove(target))
+				require.NoError(t, os.Remove("/tmp/test_put.txt"))
+			},
+			target: "/tmp/test.txt",
+			file: func(t *testing.T) fs.File {
+				open, err := os.Open("/tmp/test_put.txt")
+				require.NoError(t, err)
+				return open
+			},
+		},
+	}
+
+	c := NewIFS()
+	s := NewStorage(c)
+
+	for _, tc := range testCase {
+		t.Run(tc.name, func(t *testing.T) {
+			defer tc.after(t, tc.target)
+
+			//new上传类
+			ctx := context.TODO()
+			tc.before(t, tc.target)
+			file := tc.file(t)
+			defer file.Close()
+			err := s.PutFile(ctx, tc.target, file)
+			assert.Equal(t, tc.wantErr, err)
+		})
+	}
+
+}
