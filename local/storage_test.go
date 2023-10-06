@@ -22,6 +22,7 @@ package local
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"os"
 	"testing"
@@ -31,6 +32,8 @@ import (
 )
 
 func TestStorage_PutFile(t *testing.T) {
+	c := NewIFS()
+
 	testCase := []struct {
 		name       string
 		before     func(t *testing.T, target string)
@@ -62,13 +65,10 @@ func TestStorage_PutFile(t *testing.T) {
 		},
 	}
 
-	c := NewIFS()
-	s := NewStorage(c)
-
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			defer tc.after(t, tc.target)
-
+			s := NewStorage(c)
 			//new上传类
 			ctx := context.TODO()
 			tc.before(t, tc.target)
@@ -78,5 +78,49 @@ func TestStorage_PutFile(t *testing.T) {
 			assert.Equal(t, tc.wantErr, err)
 		})
 	}
+}
 
+func TestStorage_GetFile(t *testing.T) {
+	c := NewIFS()
+
+	testCase := []struct {
+		name       string
+		before     func(t *testing.T, target string)
+		after      func(t *testing.T, target string)
+		target     string
+		bucketFile string
+		wantVal    string
+		wantErr    error
+	}{
+		{
+			name: "test local storage put file",
+			before: func(t *testing.T, target string) {
+				create, err := os.Create("/tmp/test.txt")
+				require.NoError(t, err)
+				defer create.Close()
+				_, err = create.WriteString("the test file...")
+				require.NoError(t, err)
+			},
+			after: func(t *testing.T, target string) {
+				require.NoError(t, os.Remove(target))
+			},
+			target:  "/tmp/test.txt",
+			wantVal: "the test file...",
+		},
+	}
+
+	for _, tc := range testCase {
+		t.Run(tc.name, func(t *testing.T) {
+			defer tc.after(t, tc.target)
+			s := NewStorage(c)
+			//new上传类
+			ctx := context.TODO()
+			tc.before(t, tc.target)
+			f, err := s.GetFile(ctx, tc.target)
+			assert.Equal(t, tc.wantErr, err)
+			content, err := io.ReadAll(f)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantVal, string(content))
+		})
+	}
 }

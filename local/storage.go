@@ -24,15 +24,13 @@ import (
 	"bufio"
 	"context"
 	"io"
-
-	"github.com/noOvertimeGroup/go-filesystem"
 )
 
 type Storage struct {
 	client FS
 }
 
-func NewStorage(client FS) filesystem.Storage {
+func NewStorage(client FS) *Storage {
 	return &Storage{
 		client: client,
 	}
