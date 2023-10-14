@@ -84,16 +84,15 @@ func TestStorage_GetFile(t *testing.T) {
 	c := NewIFS()
 
 	testCase := []struct {
-		name       string
-		before     func(t *testing.T, target string)
-		after      func(t *testing.T, target string)
-		target     string
-		bucketFile string
-		wantVal    string
-		wantErr    error
+		name    string
+		before  func(t *testing.T, target string)
+		after   func(t *testing.T, target string)
+		target  string
+		wantVal string
+		wantErr error
 	}{
 		{
-			name: "test local storage put file",
+			name: "test local storage get file",
 			before: func(t *testing.T, target string) {
 				create, err := os.Create("/tmp/test.txt")
 				require.NoError(t, err)

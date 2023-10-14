@@ -21,10 +21,13 @@
 package aliyun
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"io/fs"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/stretchr/testify/assert"
@@ -38,20 +41,28 @@ var (
 	bucketName      = os.Getenv("BUCKET")
 )
 
+func isValid() bool {
+	return accessKeyID == "" || accessKeySecret == "" || endpoint == "" || bucketName == ""
+}
+
+func getClient() (*oss.Client, error) {
+	return oss.New(endpoint, accessKeyID, accessKeySecret)
+}
+
+func getBucket(client *oss.Client) (*oss.Bucket, error) {
+	return client.Bucket(bucketName)
+}
+
 func TestStorage_PutFile(t *testing.T) {
-	if accessKeyID == "" || accessKeySecret == "" || endpoint == "" || bucketName == "" {
+	if !isValid() {
 		t.Log("aliyun oss configure not found...")
 		return
 	}
-	assert.NotEmpty(t, accessKeyID)
-	assert.NotEmpty(t, accessKeySecret)
-	assert.NotEmpty(t, endpoint)
-	assert.NotEmpty(t, bucketName)
 
-	client, err := oss.New(endpoint, accessKeyID, accessKeySecret)
+	client, err := getClient()
 	require.NoError(t, err)
 
-	bucket, err := client.Bucket(bucketName)
+	bucket, err := getBucket(client)
 	require.NoError(t, err)
 
 	testCase := []struct {
@@ -103,5 +114,54 @@ func TestStorage_PutFile(t *testing.T) {
 }
 
 func TestStorage_GetFile(t *testing.T) {
+	if !isValid() {
+		t.Log("aliyun oss configure not found...")
+		return
+	}
 
+	client, err := getClient()
+	require.NoError(t, err)
+
+	bucket, err := getBucket(client)
+	require.NoError(t, err)
+
+	testCase := []struct {
+		name    string
+		before  func(t *testing.T, target string)
+		after   func(t *testing.T, target string)
+		target  string
+		wantVal string
+		wantErr error
+	}{
+		{
+			name: "test aliyun storage get file",
+			before: func(t *testing.T, target string) {
+				var bf bytes.Buffer
+				bf.WriteString("the test file...")
+				err = bucket.PutObject(target, &bf)
+				require.NoError(t, err)
+			},
+			after: func(t *testing.T, target string) {
+				require.NoError(t, bucket.DeleteObject(target))
+			},
+			target:  "test/put.txt",
+			wantVal: "the test file...",
+		},
+	}
+
+	for _, tc := range testCase {
+		t.Run(tc.name, func(t *testing.T) {
+			defer tc.after(t, tc.target)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			tc.before(t, tc.target)
+			s := NewStorage(bucket)
+			f, err := s.GetFile(ctx, tc.target)
+			assert.Equal(t, tc.wantErr, err)
+			content, err := io.ReadAll(f)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantVal, string(content))
+		})
+	}
 }
