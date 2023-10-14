@@ -54,7 +54,7 @@ func getBucket(client *oss.Client) (*oss.Bucket, error) {
 }
 
 func TestStorage_PutFile(t *testing.T) {
-	if !isValid() {
+	if isValid() {
 		t.Log("aliyun oss configure not found...")
 		return
 	}
@@ -114,7 +114,7 @@ func TestStorage_PutFile(t *testing.T) {
 }
 
 func TestStorage_GetFile(t *testing.T) {
-	if !isValid() {
+	if isValid() {
 		t.Log("aliyun oss configure not found...")
 		return
 	}
