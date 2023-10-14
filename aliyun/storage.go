@@ -40,12 +40,7 @@ func NewStorage(bucket *oss.Bucket) filesystem.Storage {
 }
 
 func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
-	err := s.client.PutObject(target, file)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.client.PutObject(target, file)
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
