@@ -29,23 +29,45 @@ import (
 	"github.com/noOvertimeGroup/go-filesystem"
 )
 
+var _ filesystem.Storage = (*Storage)(nil)
+
 type Storage struct {
-	client *oss.Bucket
+	client *oss.Client
 }
 
-func NewStorage(bucket *oss.Bucket) filesystem.Storage {
+func NewStorage(client *oss.Client) *Storage {
 	return &Storage{
-		client: bucket,
+		client: client,
 	}
 }
 
 func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
-	return s.client.PutObject(target, file)
+	object, err := filesystem.NewObject(target)
+	if err != nil {
+		return err
+	}
+
+	b, err := s.client.Bucket(object.Bucket)
+	if err != nil {
+		return err
+	}
+
+	return b.PutObject(object.Target, file)
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	object, err := filesystem.NewObject(target)
+	if err != nil {
+		return nil, err
+	}
+
 	buf := new(bytes.Buffer)
-	response, err := s.client.GetObject(target)
+	b, err := s.client.Bucket(object.Bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := b.GetObject(object.Target)
 	if err != nil {
 		return nil, err
 	}

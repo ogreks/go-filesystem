@@ -166,6 +166,9 @@ func TestStorage_GetFile(t *testing.T) {
 			s := NewStorage(client)
 			f, err := s.GetFile(ctx, tc.target)
 			assert.Equal(t, tc.wantErr, err)
+			if f == nil {
+				return
+			}
 
 			content, err := io.ReadAll(f)
 			assert.NoError(t, err)
