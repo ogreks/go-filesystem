@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tencentyun
+package tencent
 
 import (
 	"bytes"
@@ -39,14 +39,10 @@ func NewStorage(client *cos.Client) filesystem.Storage {
 	}
 }
 
-func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
+func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) (err error) {
 	// TODO return http.Response handle error
-	_, err := s.client.Object.Put(ctx, target, file, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err = s.client.Object.Put(ctx, target, file, nil)
+	return
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
@@ -61,9 +57,5 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 	}(response.Body)
 
 	_, err = io.Copy(buf, response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
+	return buf, err
 }
