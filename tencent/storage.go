@@ -29,11 +29,13 @@ import (
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
+var _ filesystem.Storage = (*Storage)(nil)
+
 type Storage struct {
 	client *cos.Client
 }
 
-func NewStorage(client *cos.Client) filesystem.Storage {
+func NewStorage(client *cos.Client) *Storage {
 	return &Storage{
 		client: client,
 	}
@@ -46,7 +48,6 @@ func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) (e
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-	buf := new(bytes.Buffer)
 	response, err := s.client.Object.Get(ctx, target, nil)
 	if err != nil {
 		return nil, err
@@ -56,6 +57,7 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 		_ = Body.Close()
 	}(response.Body)
 
+	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, response.Body)
 	return buf, err
 }

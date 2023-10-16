@@ -29,6 +29,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/noOvertimeGroup/go-filesystem/internal/errs"
+
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,9 +64,6 @@ func TestStorage_PutFile(t *testing.T) {
 	client, err := getClient()
 	require.NoError(t, err)
 
-	bucket, err := getBucket(client)
-	require.NoError(t, err)
-
 	testCase := []struct {
 		name    string
 		before  func(t *testing.T, target string)
@@ -84,9 +83,12 @@ func TestStorage_PutFile(t *testing.T) {
 			},
 			after: func(t *testing.T, target string) {
 				require.NoError(t, os.Remove("/tmp/put.txt"))
+
+				bucket, err := getBucket(client)
+				require.NoError(t, err)
 				require.NoError(t, bucket.DeleteObject(target))
 			},
-			target: "test/put.txt",
+			target: "/test/put.txt",
 			file: func(t *testing.T) fs.File {
 				open, err := os.Open("/tmp/put.txt")
 				require.NoError(t, err)
@@ -101,13 +103,13 @@ func TestStorage_PutFile(t *testing.T) {
 			defer tc.after(t, tc.target)
 
 			ctx := context.TODO()
-			s := NewStorage(bucket)
+			s := NewStorage(client)
 			tc.before(t, tc.target)
 			file := tc.file(t)
 			// if the file is open, it needs to be closed
 			defer file.Close()
 
-			err := s.PutFile(ctx, tc.target, file)
+			err := s.PutFile(ctx, bucketName+tc.target, file)
 			assert.Equal(t, tc.wantErr, err)
 		})
 	}
@@ -120,9 +122,6 @@ func TestStorage_GetFile(t *testing.T) {
 	}
 
 	client, err := getClient()
-	require.NoError(t, err)
-
-	bucket, err := getBucket(client)
 	require.NoError(t, err)
 
 	testCase := []struct {
@@ -138,14 +137,26 @@ func TestStorage_GetFile(t *testing.T) {
 			before: func(t *testing.T, target string) {
 				var bf bytes.Buffer
 				bf.WriteString("the test file...")
-				err = bucket.PutObject(target, &bf)
+
+				bucket, err := getBucket(client)
+				require.NoError(t, err)
+				err = bucket.PutObject(target[1:], &bf)
 				require.NoError(t, err)
 			},
 			after: func(t *testing.T, target string) {
-				require.NoError(t, bucket.DeleteObject(target))
+				bucket, err := getBucket(client)
+				require.NoError(t, err)
+				require.NoError(t, bucket.DeleteObject(target[1:]))
 			},
-			target:  "test/put.txt",
+			target:  "/test/put.txt",
 			wantVal: "the test file...",
+		},
+		{
+			name:    "test aliyun storage get path error",
+			before:  func(t *testing.T, target string) {},
+			after:   func(t *testing.T, target string) {},
+			target:  "",
+			wantErr: errs.ErrRelativePath,
 		},
 	}
 
@@ -156,9 +167,12 @@ func TestStorage_GetFile(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 			tc.before(t, tc.target)
-			s := NewStorage(bucket)
-			f, err := s.GetFile(ctx, tc.target)
+			s := NewStorage(client)
+			f, err := s.GetFile(ctx, bucketName+tc.target)
 			assert.Equal(t, tc.wantErr, err)
+			if f == nil {
+				return
+			}
 			content, err := io.ReadAll(f)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantVal, string(content))

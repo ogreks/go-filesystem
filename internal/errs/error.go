@@ -20,23 +20,11 @@
 
 package errs
 
-import (
-	"errors"
-	"os"
-)
+import "errors"
 
 var (
-	// ErrFileLimit upload file stream exceed 1G size
-	ErrFileLimit = errors.New("a single file exceeds 1g")
-	// ErrFileClose the file is closed
-	ErrFileClose = errors.New("the file is closed")
-	// ErrFileClosed file is closed
-	ErrFileClosed = errors.New("file is closed")
-	// ErrOutOfRange out of range
-	ErrOutOfRange = errors.New("out of range")
-	// ErrTooLarge too large
-	ErrTooLarge          = errors.New("too large")
-	ErrFileNotFound      = os.ErrNotExist
-	ErrFileExists        = os.ErrExist
-	ErrDestinationExists = os.ErrExist
+	// ErrNotFoundBucket bucket name not obtained
+	ErrNotFoundBucket = errors.New("bucket name not obtained")
+	// ErrRelativePath the given path is not a relative path
+	ErrRelativePath = errors.New("the given path is not a relative path")
 )
