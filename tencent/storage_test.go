@@ -176,3 +176,54 @@ func TestStorage_GetFile(t *testing.T) {
 		})
 	}
 }
+
+func TestStorage_Size(t *testing.T) {
+	if isValid() {
+		t.Log("tencent oss configure not found...")
+		return
+	}
+
+	client, err := getClient()
+	require.NoError(t, err)
+
+	testCase := []struct {
+		name    string
+		before  func(t *testing.T, target string)
+		after   func(t *testing.T, target string)
+		target  string
+		wantVal int64
+		wantErr error
+	}{
+		{
+			name: "test tencent storage get file size",
+			before: func(t *testing.T, target string) {
+				var bf bytes.Buffer
+				bf.WriteString("the test file...")
+
+				_, err := client.Object.Put(context.Background(), target, &bf, nil)
+				require.NoError(t, err)
+			},
+			after: func(t *testing.T, target string) {
+				_, err := client.Object.Delete(context.Background(), target)
+				require.NoError(t, err)
+			},
+			target:  "test/put.txt",
+			wantVal: int64(len("the test file...")),
+		},
+	}
+
+	for _, tc := range testCase {
+		t.Run(tc.name, func(t *testing.T) {
+			// if exist err this not run...
+			defer tc.after(t, tc.target)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			tc.before(t, tc.target)
+			s := NewStorage(client)
+			size, err := s.Size(ctx, tc.target)
+			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantVal, size)
+		})
+	}
+}

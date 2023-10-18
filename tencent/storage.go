@@ -61,3 +61,12 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 	_, err = io.Copy(buf, response.Body)
 	return buf, err
 }
+
+func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
+	f, err := s.GetFile(ctx, target)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(f.(*bytes.Buffer).Len()), nil
+}

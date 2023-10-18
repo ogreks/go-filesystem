@@ -26,6 +26,7 @@ import (
 	"io/fs"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -113,13 +114,58 @@ func TestStorage_GetFile(t *testing.T) {
 			defer tc.after(t, tc.target)
 			s := NewStorage(c)
 			//new上传类
-			ctx := context.TODO()
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
 			tc.before(t, tc.target)
 			f, err := s.GetFile(ctx, tc.target)
 			assert.Equal(t, tc.wantErr, err)
 			content, err := io.ReadAll(f)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantVal, string(content))
+		})
+	}
+}
+
+func TestStorage_Size(t *testing.T) {
+	c := NewIFS()
+
+	testCase := []struct {
+		name    string
+		before  func(t *testing.T, target string)
+		after   func(t *testing.T, target string)
+		target  string
+		wantVal int64
+		wantErr error
+	}{
+		{
+			name: "test local storage get file size",
+			before: func(t *testing.T, target string) {
+				create, err := os.Create("/tmp/test.txt")
+				require.NoError(t, err)
+				defer create.Close()
+				_, err = create.WriteString("the test file...")
+				require.NoError(t, err)
+			},
+			after: func(t *testing.T, target string) {
+				require.NoError(t, os.Remove(target))
+			},
+			target:  "/tmp/test.txt",
+			wantVal: int64(len("the test file...")),
+		},
+	}
+
+	for _, tc := range testCase {
+		t.Run(tc.name, func(t *testing.T) {
+			defer tc.after(t, tc.target)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			tc.before(t, tc.target)
+			s := NewStorage(c)
+			size, err := s.Size(ctx, tc.target)
+			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantVal, size)
 		})
 	}
 }
