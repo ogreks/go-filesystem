@@ -30,4 +30,6 @@ type Storage interface {
 	PutFile(ctx context.Context, target string, file io.Reader) error
 	// GetFile 给定目标文件位置 获取文件流
 	GetFile(ctx context.Context, target string) (io.Reader, error)
+	// Size 获取目标文件的大小（单位字节）
+	Size(ctx context.Context, target string) (int64, error)
 }
