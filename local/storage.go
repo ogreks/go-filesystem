@@ -24,21 +24,19 @@ import (
 	"bufio"
 	"context"
 	"io"
-
-	"github.com/noOvertimeGroup/go-filesystem"
 )
 
 type Storage struct {
 	client FS
 }
 
-func NewStorage(client FS) filesystem.Storage {
+func NewStorage(client FS) *Storage {
 	return &Storage{
 		client: client,
 	}
 }
 
-func (s Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
+func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
 	f, err := s.client.Create(target)
 	if err != nil {
 		return err
@@ -52,6 +50,20 @@ func (s Storage) PutFile(ctx context.Context, target string, file io.Reader) err
 	return nil
 }
 
-func (s Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
 	return s.client.Open(target)
+}
+
+func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
+	f, err := s.GetFile(ctx, target)
+	if err != nil {
+		return 0, err
+	}
+
+	stat, err := f.(File).Stat()
+	if err != nil {
+		return 0, err
+	}
+
+	return stat.Size(), nil
 }

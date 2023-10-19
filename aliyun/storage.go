@@ -29,28 +29,46 @@ import (
 	"github.com/noOvertimeGroup/go-filesystem"
 )
 
+var _ filesystem.Storage = (*Storage)(nil)
+
 type Storage struct {
-	client *oss.Bucket
+	client *oss.Client
 }
 
-func NewStorage(bucket *oss.Bucket) filesystem.Storage {
+func NewStorage(client *oss.Client) *Storage {
 	return &Storage{
-		client: bucket,
+		client: client,
 	}
 }
 
+// setBucket set client bucket return *oss.Bucket,filesystem.Object,error
+func (s *Storage) setBucket(target string) (bucket *oss.Bucket, object filesystem.Object, err error) {
+	object, err = filesystem.NewObject(target)
+	if err != nil {
+		return
+	}
+
+	bucket, err = s.client.Bucket(object.Bucket)
+	return
+}
+
 func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
-	err := s.client.PutObject(target, file)
+	b, object, err := s.setBucket(target)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return b.PutObject(object.Target, file)
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	b, object, err := s.setBucket(target)
+	if err != nil {
+		return nil, err
+	}
+
 	buf := new(bytes.Buffer)
-	response, err := s.client.GetObject(target)
+	response, err := b.GetObject(object.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -69,4 +87,14 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 	}
 
 	return buf, nil
+}
+
+// Size GetFile read file bytes length return
+func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
+	f, err := s.GetFile(ctx, target)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(f.(*bytes.Buffer).Len()), nil
 }

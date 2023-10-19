@@ -23,60 +23,49 @@ package huaweicloud
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
-	"path"
-	"strings"
 
 	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
 	"github.com/noOvertimeGroup/go-filesystem"
 )
 
+var _ filesystem.Storage = (*Storage)(nil)
+
 type Storage struct {
 	client *obs.ObsClient
 }
 
-func NewStorage(client *obs.ObsClient) filesystem.Storage {
+func NewStorage(client *obs.ObsClient) *Storage {
 	return &Storage{
 		client: client,
 	}
 }
 
 func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
-	if path.IsAbs(target) {
-		return errors.New("给定服务路径不是相对路径")
-	}
-
-	index := strings.Index(target, "/")
-	bucket := target[:index]
-	target = target[index+1:]
-
-	input := &obs.PutObjectInput{}
-	input.Bucket = bucket
-	input.Key = target
-	input.Body = file
-
-	_, err := s.client.PutObject(input)
+	object, err := filesystem.NewObject(target)
 	if err != nil {
 		return err
 	}
-	// TODO 可以根据返回值进一步判断错误
-	return nil
+
+	input := &obs.PutObjectInput{}
+	input.Bucket = object.Bucket
+	input.Key = object.Target
+	input.Body = file
+
+	_, err = s.client.PutObject(input)
+	return err
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-	if !path.IsAbs(target) {
-		return nil, errors.New("给定服务路径不是相对路径")
+	object, err := filesystem.NewObject(target)
+	if err != nil {
+		return nil, err
 	}
 
 	buf := new(bytes.Buffer)
-	index := strings.Index(target, "/")
-	bucket := target[:index]
-	target = target[index:]
-
 	input := &obs.GetObjectInput{}
-	input.Bucket = bucket
-	input.Key = target
+	input.Bucket = object.Bucket
+	input.Key = object.Target
 
 	response, err := s.client.GetObject(input)
 	if err != nil {
@@ -88,9 +77,14 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 	}(response.Body)
 
 	_, err = io.Copy(buf, response.Body)
+	return buf, err
+}
+
+func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
+	f, err := s.GetFile(ctx, target)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return buf, nil
+	return int64(f.(*bytes.Buffer).Len()), nil
 }

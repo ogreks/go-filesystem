@@ -18,52 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tencentyun
+package filesystem
 
 import (
-	"bytes"
-	"context"
-	"io"
+	"strings"
 
-	"github.com/noOvertimeGroup/go-filesystem"
-	"github.com/tencentyun/cos-go-sdk-v5"
+	"github.com/noOvertimeGroup/go-filesystem/internal/errs"
 )
 
-type Storage struct {
-	client *cos.Client
+type Object struct {
+	Bucket string
+	Target string
 }
 
-func NewStorage(client *cos.Client) filesystem.Storage {
-	return &Storage{
-		client: client,
-	}
-}
-
-func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
-	// TODO return http.Response handle error
-	_, err := s.client.Object.Put(ctx, target, file, nil)
-	if err != nil {
-		return err
+func NewObject(s string) (o Object, err error) {
+	index := strings.Index(s, "/")
+	if index == -1 {
+		return Object{}, errs.ErrRelativePath
 	}
 
-	return nil
-}
+	o.Bucket = s[:index]
+	o.Target = s[index+1:]
 
-func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-	buf := new(bytes.Buffer)
-	response, err := s.client.Object.Get(ctx, target, nil)
-	if err != nil {
-		return nil, err
+	if o.Bucket == "" || o.Target == "" {
+		return Object{}, errs.ErrNotFoundBucket
 	}
 
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(response.Body)
-
-	_, err = io.Copy(buf, response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
+	return
 }

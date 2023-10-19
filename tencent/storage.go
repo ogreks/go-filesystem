@@ -18,18 +18,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package filesystem
+package tencent
 
 import (
+	"bytes"
 	"context"
 	"io"
+
+	"github.com/noOvertimeGroup/go-filesystem"
+	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
-type Storage interface {
-	// PutFile 给定文件流上传文件 要求小于1g 目标文件不存在则创建，目标文件存在则覆盖
-	PutFile(ctx context.Context, target string, file io.Reader) error
-	// GetFile 给定目标文件位置 获取文件流
-	GetFile(ctx context.Context, target string) (io.Reader, error)
-	// Size 获取目标文件的大小（单位字节）
-	Size(ctx context.Context, target string) (int64, error)
+var _ filesystem.Storage = (*Storage)(nil)
+
+type Storage struct {
+	client *cos.Client
+}
+
+func NewStorage(client *cos.Client) *Storage {
+	return &Storage{
+		client: client,
+	}
+}
+
+func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) (err error) {
+	// TODO return http.Response handle error
+	_, err = s.client.Object.Put(ctx, target, file, nil)
+	return
+}
+
+func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
+	response, err := s.client.Object.Get(ctx, target, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(response.Body)
+
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, response.Body)
+	return buf, err
+}
+
+func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
+	f, err := s.GetFile(ctx, target)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(f.(*bytes.Buffer).Len()), nil
 }

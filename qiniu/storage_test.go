@@ -39,7 +39,7 @@ var (
 	bucketName      = os.Getenv("BUCKET")
 )
 
-func TestStorage_PutFile2(t *testing.T) {
+func TestStorage_PutFile(t *testing.T) {
 	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" {
 		t.Log("qiniu kodo configure not found...")
 		return
@@ -113,3 +113,76 @@ func TestStorage_PutFile2(t *testing.T) {
 		})
 	}
 }
+
+// TODO 注意需要等待实现
+/*func TestStorage_Size(t *testing.T) {
+	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" {
+		t.Log("qiniu kodo configure not found...")
+		return
+	}
+	//上传凭据
+	putPolicy := storage.PutPolicy{
+		Scope: bucketName,
+	}
+	mac := qbox.NewMac(accessKeyID, accessKeySecret)
+	upToken := putPolicy.UploadToken(mac)
+
+	if upToken == "" {
+		t.Log("Upload Token  is nil...")
+		return
+	}
+
+	cfg := storage.Config{}
+	// 空间对应的机房
+	region, ok := storage.GetRegionByID(storage.RegionID(endpoint))
+	assert.Equal(t, true, ok)
+	cfg.Region = &region
+	NewFormUploader := storage.NewFormUploader(&cfg)
+	NewBucketManager := storage.NewBucketManager(mac, &cfg)
+
+	// TODO 这个 client 是否可以交由 具体实现去控制
+	c := &Client{
+		NewFormUploader,
+		NewBucketManager,
+		upToken,
+	}
+
+	testCase := []struct {
+		name    string
+		before  func(t *testing.T, target string)
+		after   func(t *testing.T, target string)
+		target  string
+		wantVal int64
+		wantErr error
+	}{
+		{
+			name: "test qiniu storage get file size",
+			before: func(t *testing.T, target string) {
+				bf := bytes.NewReader([]byte("the test file..."))
+
+				err := NewFormUploader.Put(context.Background(), nil, upToken, target, bf, int64(bf.Len()), nil)
+				require.NoError(t, err)
+			},
+			after: func(t *testing.T, target string) {
+				require.NoError(t, NewBucketManager.Delete(bucketName, target))
+			},
+			target:  "test/put.txt",
+			wantVal: int64(len("the test file...")),
+		},
+	}
+
+	for _, tc := range testCase {
+		t.Run(tc.name, func(t *testing.T) {
+			// if exist err this not run...
+			defer tc.after(t, tc.target)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			tc.before(t, tc.target)
+			s := NewStorage(c)
+			size, err := s.Size(ctx, tc.target)
+			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantVal, size)
+		})
+	}
+}*/
