@@ -23,6 +23,8 @@ package qiniu
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/noOvertimeGroup/go-filesystem"
@@ -35,6 +37,7 @@ var _ filesystem.Storage = (*Storage)(nil)
 type Client struct {
 	bucket  *storage.FormUploader
 	manager *storage.BucketManager
+
 	upToken string
 }
 
@@ -60,20 +63,45 @@ func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) er
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-	// TODO 注意此方法是无法使用的
-	fileInfo, sErr := s.client.manager.Stat("", target)
+
+	bucketName := ctx.Value("bucketName")
+	bucketName1, ok := bucketName.(string)
+	if !ok {
+		return nil, errors.New("bucketName 必须是string 类型")
+	}
+	fileInfo, sErr := s.client.manager.Stat(bucketName1, target)
+	fmt.Print(fileInfo.String())
+	fmt.Print("-------------")
 	b := new(bytes.Buffer)
 	b.WriteString(fileInfo.String())
 	return b, sErr
 	//return io.Reader, sErr
 }
 
+func (s *Storage) GetFile1(ctx context.Context, target string) {
+	bucketName := ctx.Value("bucketName")
+	bucketName1, ok := bucketName.(string)
+
+	key := "文件保存的 key.jpg"
+	bucket := "对象所在的 bucket"
+	NewBucketManager := s.client.manager
+
+	domain := "https://image.example.com"
+	key := "这是一个测试文件.jpg"
+	publicAccessURL := storage.MakePublicURL(domain, key)
+	fmt.Println(publicAccessURL)
+
+}
+
 func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
-	// TODO 此方法测试用例待 GetFile 完成测试后测试
-	f, err := s.GetFile(ctx, target)
+	bucketName := ctx.Value("bucketName")
+	bucketName1, ok := bucketName.(string)
+	if !ok {
+		return 0, errors.New("bucketName 必须是string 类型")
+	}
+	fileInfo, err := s.client.manager.Stat(bucketName1, target)
 	if err != nil {
 		return 0, err
 	}
-
-	return int64(f.(*bytes.Buffer).Len()), nil
+	return fileInfo.Fsize, nil
 }
