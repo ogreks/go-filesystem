@@ -23,8 +23,7 @@ package qiniu
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"io/fs"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -79,28 +78,21 @@ func TestStorage_PutFile(t *testing.T) {
 		before  func(t *testing.T, target string)
 		after   func(t *testing.T, target string)
 		target  string
-		file    func(t *testing.T) fs.File
+		file    func(t *testing.T) io.Reader
 		wantErr error
 	}{
 		{
 			name: "test qiniu storage put file",
 			before: func(t *testing.T, target string) {
-				create, err := os.Create("./test_put.txt")
-				fmt.Printf("%v", err)
-				require.NoError(t, err)
-				defer create.Close()
-				_, err = create.WriteString("the test file...")
-				require.NoError(t, err)
+
 			},
 			after: func(t *testing.T, target string) {
-				require.NoError(t, os.Remove("./test_put.txt"))
-				require.NoError(t, NewBucketManager.Delete(bucketName, target))
+				//require.NoError(t, NewBucketManager.Delete(bucketName, target))
 			},
-			target: "test_put.txt",
-			file: func(t *testing.T) fs.File {
-				open, err := os.Open("./test_put.txt")
-				require.NoError(t, err)
-				return open
+			target: "test/put.txt",
+			file: func(t *testing.T) io.Reader {
+				bf := bytes.NewReader([]byte("the test file..."))
+				return bf
 			},
 		},
 	}
@@ -112,7 +104,6 @@ func TestStorage_PutFile(t *testing.T) {
 			ctx := context.TODO()
 			tc.before(t, tc.target)
 			file := tc.file(t)
-			defer file.Close()
 			err := s.PutFile(ctx, tc.target, file)
 			assert.Equal(t, tc.wantErr, err)
 		})
