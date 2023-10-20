@@ -24,19 +24,15 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
+	qiniuSdk "github.com/qiniu/go-sdk/v7/storage"
 	"io"
-
-	"github.com/noOvertimeGroup/go-filesystem"
-	"github.com/qiniu/go-sdk/v7/storage"
+	"net/http"
 )
-
-var _ filesystem.Storage = (*Storage)(nil)
 
 // TODO 此结构体不应该存在
 type Client struct {
-	bucket  *storage.FormUploader
-	manager *storage.BucketManager
+	bucket  *qiniuSdk.FormUploader
+	manager *qiniuSdk.BucketManager
 
 	upToken string
 }
@@ -63,33 +59,24 @@ func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) er
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-
-	bucketName := ctx.Value("bucketName")
-	bucketName1, ok := bucketName.(string)
-	if !ok {
-		return nil, errors.New("bucketName 必须是string 类型")
+	ossDomain := ctx.Value("ossDomain")
+	domain, ok := ossDomain.(string)
+	if ok != true {
+		return nil, errors.New("CDN域名不能为空")
 	}
-	fileInfo, sErr := s.client.manager.Stat(bucketName1, target)
-	fmt.Print(fileInfo.String())
-	fmt.Print("-------------")
-	b := new(bytes.Buffer)
-	b.WriteString(fileInfo.String())
-	return b, sErr
-	//return io.Reader, sErr
-}
-
-func (s *Storage) GetFile1(ctx context.Context, target string) {
-	bucketName := ctx.Value("bucketName")
-	bucketName1, ok := bucketName.(string)
-
-	key := "文件保存的 key.jpg"
-	bucket := "对象所在的 bucket"
-	NewBucketManager := s.client.manager
-
-	domain := "https://image.example.com"
-	key := "这是一个测试文件.jpg"
-	publicAccessURL := storage.MakePublicURL(domain, key)
-	fmt.Println(publicAccessURL)
+	//domain3, err := url.ParseRequestURI(domain2)
+	//if err != nil {
+	//	return nil, errors.New("CDN域名不能为空")
+	//}
+	//domain := "https://image.example.com"
+	//publicAccessURL := storage.MakePublicURL(domain, key)
+	//fmt.Println(publicAccessURL)
+	publicAccessURL := qiniuSdk.MakePublicURL(domain, target)
+	resp, err := http.Get(publicAccessURL)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, err
 
 }
 

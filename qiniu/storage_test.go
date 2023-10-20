@@ -38,8 +38,9 @@ import (
 var (
 	accessKeyID     = os.Getenv("QINIU_OSS_ACCESSKEY_ID")
 	accessKeySecret = os.Getenv("QINIU_OSS_ACCESSKEY_SECRET")
-	endpoint        = os.Getenv("QINUI_OSS_ENDOPOINT") // cn-east-2
+	endpoint        = os.Getenv("QINIU_OSS_ENDOPOINT") // cn-east-2
 	bucketName      = os.Getenv("BUCKET")
+	ossDomain       = os.Getenv("QINIU_OSS_DOMAIN")
 )
 
 func TestStorage_PutFile(t *testing.T) {
@@ -120,7 +121,7 @@ func TestStorage_PutFile(t *testing.T) {
 
 func TestStorage_GetFile(t *testing.T) {
 
-	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" {
+	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" || ossDomain == "" {
 		t.Log("qiniu kodo configure not found...")
 		return
 	}
@@ -165,14 +166,14 @@ func TestStorage_GetFile(t *testing.T) {
 			after: func(t *testing.T, target string) {
 
 			},
-			target: "test_put.txt",
+			target: "test/put.txt",
 		},
 	}
 
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			//new查询类
-			ctx := context.WithValue(context.Background(), "bucketName", bucketName)
+			ctx := context.WithValue(context.Background(), "ossDomain", ossDomain)
 			bt, err := s.GetFile(ctx, tc.target)
 			t.Log(bt)
 			assert.Equal(t, tc.wantErr, err)
