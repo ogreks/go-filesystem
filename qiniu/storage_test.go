@@ -161,10 +161,11 @@ func TestStorage_GetFile(t *testing.T) {
 		},
 	}
 
+	type MyString string
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			//new查询类
-			ctx := context.WithValue(context.Background(), "ossDomain", ossDomain)
+			ctx := context.WithValue(context.Background(), MyString("ossDomain"), ossDomain)
 			bt, err := s.GetFile(ctx, tc.target)
 			t.Log(bt)
 			assert.Equal(t, tc.wantErr, err)
@@ -229,13 +230,14 @@ func TestStorage_Size(t *testing.T) {
 		},
 	}
 
+	type myString string
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			// if exist err this not run...
 			defer tc.after(t, tc.target)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			ctx = context.WithValue(ctx, "bucketName", bucketName)
+			ctx = context.WithValue(ctx, myString("bucketName"), bucketName)
 			defer cancel()
 			tc.before(t, tc.target)
 			s := NewStorage(c)

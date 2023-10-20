@@ -24,9 +24,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	qiniuSdk "github.com/qiniu/go-sdk/v7/storage"
 	"io"
 	"net/http"
+
+	qiniuSdk "github.com/qiniu/go-sdk/v7/storage"
 )
 
 // TODO 此结构体不应该存在
@@ -61,7 +62,7 @@ func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) er
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
 	ossDomain := ctx.Value("ossDomain")
 	domain, ok := ossDomain.(string)
-	if ok != true {
+	if !ok {
 		return nil, errors.New("CDN域名不能为空")
 	}
 	//domain3, err := url.ParseRequestURI(domain2)
