@@ -73,7 +73,7 @@ func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error)
 
 	url := qiniuSdk.MakePrivateURL(s.client.Mac, s.domain, object.Target, time.Now().Add(time.Second*10).Unix())
 	response, err := s.client.Client.Get(url)
-	return response.Body, nil
+	return response.Body, err
 }
 
 func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
