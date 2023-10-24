@@ -105,9 +105,10 @@ func TestStorage_PutFile(t *testing.T) {
 
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
-			// if exist err this not run...
 			defer tc.after(t, tc.target)
-			ctx := context.Background()
+			// if exist err this not run...
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
 			s := NewStorage(client)
 			tc.before(t, tc.target)
 
