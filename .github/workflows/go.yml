@@ -48,6 +48,7 @@ jobs:
       QINIU_OSS_ACCESSKEY_SECRET: ${{ secrets.QINIU_OSS_ACCESSKEY_SECRET }}
       QINUI_OSS_ENDOPOINT: ${{ secrets.QINUI_OSS_ENDOPOINT }}
       QINIU_OSS_DOMAIN: ${{ secrets.QINIU_OSS_DOMAIN }}
+
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go
