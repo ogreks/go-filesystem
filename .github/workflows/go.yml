@@ -22,12 +22,10 @@ name: Go
 
 on: 
   push:
-    branches: [master, develop]
-  pull_request_target:
-    types:
-      - 'labeled'
-      - 'opened'
-      - 'ready_for_review'
+    branches:
+      - master
+      - develop
+  pull_request:
     branches:
       - master
       - develop
@@ -35,7 +33,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || ( github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'safe to test'))
     env:
       BUCKET: ${{ secrets.BUCKET }}
       ALIYUN_OSS_ACCESSKEY_ID: ${{ secrets.ALIYUN_OSS_ACCESSKEY_ID }}
@@ -49,8 +46,9 @@ jobs:
       TENCENT_OSS_ENDPOINT: ${{ secrets.TENCENT_OSS_ENDPOINT }}
       QINIU_OSS_ACCESSKEY_ID: ${{ secrets.QINIU_OSS_ACCESSKEY_ID }}
       QINIU_OSS_ACCESSKEY_SECRET: ${{ secrets.QINIU_OSS_ACCESSKEY_SECRET }}
-      QINUI_OSS_ENDOPOINT: ${{ secrets.QINUI_OSS_ENDOPOINT }}
+      QINIU_OSS_ENDOPOINT: ${{ secrets.QINIU_OSS_ENDOPOINT }}
       QINIU_OSS_DOMAIN: ${{ secrets.QINIU_OSS_DOMAIN }}
+
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go

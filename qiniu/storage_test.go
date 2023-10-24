@@ -23,15 +23,17 @@ package qiniu
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -39,172 +41,135 @@ var (
 	accessKeySecret = os.Getenv("QINIU_OSS_ACCESSKEY_SECRET")
 	endpoint        = os.Getenv("QINIU_OSS_ENDOPOINT") // cn-east-2
 	bucketName      = os.Getenv("BUCKET")
-	ossDomain       = os.Getenv("QINIU_OSS_DOMAIN")
+	domain          = os.Getenv("QINIU_OSS_DOMAIN")
 )
 
-func TestStorage_PutFile(t *testing.T) {
-	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" {
-		t.Log("qiniu kodo configure not found...")
-		return
-	}
-	//上传凭据
-	putPolicy := storage.PutPolicy{
-		Scope: bucketName,
-	}
+func isValid() bool {
+	return accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" || domain == ""
+}
+
+// getBucketManager get *storage.BucketManager
+func getBucketManager(t *testing.T) *storage.BucketManager {
 	mac := qbox.NewMac(accessKeyID, accessKeySecret)
-	upToken := putPolicy.UploadToken(mac)
-
-	if upToken == "" {
-		t.Log("Upload Token  is nil...")
-		return
-	}
-
 	cfg := storage.Config{}
 	// 空间对应的机房
 	region, ok := storage.GetRegionByID(storage.RegionID(endpoint))
 	assert.Equal(t, true, ok)
 	cfg.Region = &region
-	NewFormUploader := storage.NewFormUploader(&cfg)
-	NewBucketManager := storage.NewBucketManager(mac, &cfg)
+	return storage.NewBucketManager(mac, &cfg)
+}
 
-	s := NewStorage(&Client{
-		NewFormUploader,
-		NewBucketManager,
-		upToken,
-	})
+func TestStorage_PutFile(t *testing.T) {
+	if isValid() {
+		t.Log("qiniu kodo configure not found...")
+		return
+	}
+
+	client := getBucketManager(t)
 
 	testCase := []struct {
 		name    string
 		before  func(t *testing.T, target string)
 		after   func(t *testing.T, target string)
 		target  string
-		file    func(t *testing.T) io.Reader
+		file    io.Reader
 		wantErr error
 	}{
 		{
-			name: "test qiniu storage put file",
-			before: func(t *testing.T, target string) {
-
-			},
+			name:   "test qiniu storage put file",
+			before: func(t *testing.T, target string) {},
 			after: func(t *testing.T, target string) {
-				//require.NoError(t, NewBucketManager.Delete(bucketName, target))
+				require.NoError(t, client.Delete(bucketName, target))
 			},
 			target: "test/put.txt",
-			file: func(t *testing.T) io.Reader {
-				bf := bytes.NewReader([]byte("the test file..."))
-				return bf
-			},
+			file:   bytes.NewReader([]byte("the test file...")),
 		},
 	}
 
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			defer tc.after(t, tc.target)
-			//new上传类
-			ctx := context.TODO()
+			// if exist err this not run...
 			tc.before(t, tc.target)
-			file := tc.file(t)
-			err := s.PutFile(ctx, tc.target, file)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			s := NewStorage(client, domain)
+			err := s.PutFile(ctx, fmt.Sprintf("%s/%s", bucketName, tc.target), tc.file)
 			assert.Equal(t, tc.wantErr, err)
 		})
 	}
 }
 
 func TestStorage_GetFile(t *testing.T) {
-
-	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" || ossDomain == "" {
+	if isValid() {
 		t.Log("qiniu kodo configure not found...")
 		return
 	}
-	//上传凭据
-	putPolicy := storage.PutPolicy{
-		Scope: bucketName,
-	}
-	mac := qbox.NewMac(accessKeyID, accessKeySecret)
-	upToken := putPolicy.UploadToken(mac)
 
-	if upToken == "" {
-		t.Log("Upload Token  is nil...")
-		return
-	}
-
-	cfg := storage.Config{}
-	// 空间对应的机房
-	region, ok := storage.GetRegionByID(storage.RegionID(endpoint))
-	assert.Equal(t, true, ok)
-	cfg.Region = &region
-	NewFormUploader := storage.NewFormUploader(&cfg)
-	NewBucketManager := storage.NewBucketManager(mac, &cfg)
-
-	s := NewStorage(&Client{
-		NewFormUploader,
-		NewBucketManager,
-		upToken,
-	})
+	client := getBucketManager(t)
 
 	testCase := []struct {
 		name    string
 		before  func(t *testing.T, target string)
 		after   func(t *testing.T, target string)
 		target  string
+		wantVal string
 		wantErr error
 	}{
 		{
 			name: "test qiniu storage put file",
 			before: func(t *testing.T, target string) {
+				bf := bytes.NewReader([]byte("the test file..."))
 
+				putPolicy := storage.PutPolicy{
+					Scope: bucketName + ":" + target,
+				}
+				uploadToken := putPolicy.UploadToken(client.Mac)
+				from := storage.NewFormUploader(client.Cfg)
+				err := from.Put(context.Background(), nil, uploadToken, target, bf, bf.Size(), nil)
+				require.NoError(t, err)
 			},
 			after: func(t *testing.T, target string) {
-
+				require.NoError(t, client.Delete(bucketName, target))
 			},
-			target: "test/put.txt",
+			target:  "test/put.txt",
+			wantVal: "the test file...",
 		},
 	}
 
-	type MyString string
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
-			//new查询类
-			ctx := context.WithValue(context.Background(), MyString("ossDomain"), ossDomain)
-			bt, err := s.GetFile(ctx, tc.target)
-			t.Log(bt)
+			defer tc.after(t, tc.target)
+			// if exist err this not run...
+			tc.before(t, tc.target)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			s := NewStorage(client, domain)
+
+			f, err := s.GetFile(ctx, fmt.Sprintf("%s/%s", bucketName, tc.target))
 			assert.Equal(t, tc.wantErr, err)
+			if f == nil {
+				return
+			}
+
+			content, err := io.ReadAll(f)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantVal, string(content))
 		})
 	}
 }
 
-// TODO 注意需要等待实现
 func TestStorage_Size(t *testing.T) {
-	if accessKeyID == "" || accessKeySecret == "" || bucketName == "" || endpoint == "" {
+	if isValid() {
 		t.Log("qiniu kodo configure not found...")
 		return
 	}
-	//上传凭据
-	putPolicy := storage.PutPolicy{
-		Scope: bucketName,
-	}
-	mac := qbox.NewMac(accessKeyID, accessKeySecret)
-	upToken := putPolicy.UploadToken(mac)
 
-	if upToken == "" {
-		t.Log("Upload Token  is nil...")
-		return
-	}
-
-	cfg := storage.Config{}
-	// 空间对应的机房
-	region, ok := storage.GetRegionByID(storage.RegionID(endpoint))
-	assert.Equal(t, true, ok)
-	cfg.Region = &region
-	NewFormUploader := storage.NewFormUploader(&cfg)
-	NewBucketManager := storage.NewBucketManager(mac, &cfg)
-
-	// TODO 这个 client 是否可以交由 具体实现去控制
-	c := &Client{
-		NewFormUploader,
-		NewBucketManager,
-		upToken,
-	}
+	client := getBucketManager(t)
 
 	testCase := []struct {
 		name    string
@@ -219,29 +184,34 @@ func TestStorage_Size(t *testing.T) {
 			before: func(t *testing.T, target string) {
 				bf := bytes.NewReader([]byte("the test file..."))
 
-				err := NewFormUploader.Put(context.Background(), nil, upToken, target, bf, int64(bf.Len()), nil)
+				putPolicy := storage.PutPolicy{
+					Scope: bucketName + ":" + target,
+				}
+				uploadToken := putPolicy.UploadToken(client.Mac)
+				from := storage.NewFormUploader(client.Cfg)
+				err := from.Put(context.Background(), nil, uploadToken, target, bf, bf.Size(), nil)
 				require.NoError(t, err)
 			},
 			after: func(t *testing.T, target string) {
-				//require.NoError(t, NewBucketManager.Delete(bucketName, target))
+				require.NoError(t, client.Delete(bucketName, target))
 			},
 			target:  "test/put.txt",
 			wantVal: int64(len("the test file...")),
 		},
 	}
 
-	type myString string
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
-			// if exist err this not run...
 			defer tc.after(t, tc.target)
+			// if exist err this not run...
+			tc.before(t, tc.target)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			ctx = context.WithValue(ctx, myString("bucketName"), bucketName)
 			defer cancel()
-			tc.before(t, tc.target)
-			s := NewStorage(c)
-			size, err := s.Size(ctx, tc.target)
+
+			s := NewStorage(client, domain)
+
+			size, err := s.Size(ctx, fmt.Sprintf("%s/%s", bucketName, tc.target))
 			assert.Equal(t, tc.wantErr, err)
 			assert.Equal(t, tc.wantVal, size)
 		})

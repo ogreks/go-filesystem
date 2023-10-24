@@ -23,73 +23,65 @@ package qiniu
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
-	"net/http"
+	"time"
 
+	"github.com/noOvertimeGroup/go-filesystem"
 	qiniuSdk "github.com/qiniu/go-sdk/v7/storage"
 )
 
-// TODO 此结构体不应该存在
-type Client struct {
-	bucket  *qiniuSdk.FormUploader
-	manager *qiniuSdk.BucketManager
-
-	upToken string
-}
+var _ filesystem.Storage = (*Storage)(nil)
 
 type Storage struct {
-	client *Client
+	client *qiniuSdk.BucketManager
+	domain string // 外链域名
 }
 
-func NewStorage(client *Client) *Storage {
+func NewStorage(client *qiniuSdk.BucketManager, domain string) *Storage {
 	return &Storage{
 		client: client,
+		domain: domain,
 	}
 }
 
 func (s *Storage) PutFile(ctx context.Context, target string, file io.Reader) error {
+	object, err := filesystem.NewObject(target)
+	if err != nil {
+		return err
+	}
+
+	// qiniu 内部使用了 io.ReadSeeker 导致直接传递 io.Reader 无法使用
 	buf := &bytes.Buffer{}
 	size, err := buf.ReadFrom(file)
 	if err != nil {
 		return err
 	}
-	fileBytes := buf.Bytes()
-	data := bytes.NewReader(fileBytes)
-	return s.client.bucket.Put(ctx, nil, s.client.upToken, target, data, int64(size), nil)
+
+	putPolicy := qiniuSdk.PutPolicy{
+		Scope: object.Bucket + ":" + object.Target,
+	}
+	uploadToken := putPolicy.UploadToken(s.client.Mac)
+	from := qiniuSdk.NewFormUploader(s.client.Cfg)
+	return from.Put(ctx, nil, uploadToken, object.Target, buf, size, nil)
 }
 
 func (s *Storage) GetFile(ctx context.Context, target string) (io.Reader, error) {
-	ossDomain := ctx.Value("ossDomain")
-	domain, ok := ossDomain.(string)
-	if !ok {
-		return nil, errors.New("CDN域名不能为空")
-	}
-	//domain3, err := url.ParseRequestURI(domain2)
-	//if err != nil {
-	//	return nil, errors.New("CDN域名不能为空")
-	//}
-	//domain := "https://image.example.com"
-	//publicAccessURL := storage.MakePublicURL(domain, key)
-	//fmt.Println(publicAccessURL)
-	publicAccessURL := qiniuSdk.MakePublicURL(domain, target)
-	resp, err := http.Get(publicAccessURL)
+	object, err := filesystem.NewObject(target)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, err
 
+	url := qiniuSdk.MakePrivateURL(s.client.Mac, s.domain, object.Target, time.Now().Add(time.Second*10).Unix())
+	response, err := s.client.Client.Get(url)
+	return response.Body, err
 }
 
 func (s *Storage) Size(ctx context.Context, target string) (int64, error) {
-	bucketName := ctx.Value("bucketName")
-	bucketName1, ok := bucketName.(string)
-	if !ok {
-		return 0, errors.New("bucketName 必须是string 类型")
-	}
-	fileInfo, err := s.client.manager.Stat(bucketName1, target)
+	object, err := filesystem.NewObject(target)
 	if err != nil {
 		return 0, err
 	}
-	return fileInfo.Fsize, nil
+
+	info, err := s.client.Stat(object.Bucket, object.Target)
+	return info.Fsize, err
 }
