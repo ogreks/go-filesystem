@@ -61,6 +61,21 @@ func getBucketManager(t *testing.T) *storage.BucketManager {
 
 func TestStorage_PutFile(t *testing.T) {
 	if isValid() {
+		if accessKeyID == "" {
+			t.Log("accessKeyID")
+		}
+
+		if accessKeySecret == "" {
+			t.Log("accessKeySecret")
+		}
+
+		if bucketName == "" {
+			t.Log("bucketName")
+		}
+
+		if domain == "" {
+			t.Log("domain")
+		}
 		t.Log("qiniu kodo configure not found...")
 		return
 	}
