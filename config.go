@@ -1,7 +1,6 @@
 package filesystem
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -41,7 +40,7 @@ func (f *BaseConfig) Get(key any, defaultValue ...any) (any, error) {
 		return defaultValue[0], nil
 	}
 
-	return nil, errors.New("key not found")
+	return nil, ERR_CONFIG_KEY_NOT_FOUND
 }
 
 func (f *BaseConfig) Extend(config Config) Config {

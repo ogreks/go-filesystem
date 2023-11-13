@@ -10,6 +10,5 @@ type Reader interface {
 	LastModified(path string) (int64, error)
 	FileSize(path string) (int64, error)
 	MimeType(path string) (string, error)
-	Visibility(path string) (string, error)
 	ListContents(directory string, recursive bool) ([]map[string]any, error)
 }
